@@ -60,7 +60,6 @@ RUN systemctl enable setup-users.service
 
 # Enable reboot after bootc update
 RUN mkdir -p /etc/systemd/system/bootc-fetch-apply-updates.service.d
-
 RUN cat <<EOF > /etc/systemd/system/bootc-fetch-apply-updates.service.d/override.conf
 [Service]
 ExecStart=
