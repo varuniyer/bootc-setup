@@ -1,0 +1,25 @@
+[Unit]
+Description=PostgreSQL 18 (experiments user)
+After=network.target
+
+[Container]
+Image=docker.io/library/postgres:18-alpine
+ContainerName=postgres
+AutoUpdate=registry
+
+PublishPort=127.0.0.1:5432:5432
+
+Volume=/var/lib/postgres/experiments:/var/lib/postgresql/data:Z
+Volume=/usr/share/postgres/postgresql.conf:/var/lib/postgresql/data/postgresql.conf:ro
+Volume=/usr/share/postgres/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf:ro
+
+Environment=POSTGRES_DB=experiments
+Environment=POSTGRES_USER=experiments
+
+Exec=postgres -c config_file=/var/lib/postgresql/data/postgresql.conf
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

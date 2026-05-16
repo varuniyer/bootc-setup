@@ -1,0 +1,22 @@
+[Unit]
+Description=Apache WebDAV (httpd user)
+After=network.target
+
+[Container]
+Image=docker.io/library/httpd:alpine
+ContainerName=webdav
+AutoUpdate=registry
+
+PublishPort=127.0.0.1:8080:8080
+
+Volume=/var/lib/webdav/data:/var/lib/webdav/data:Z
+Volume=/var/lib/webdav/lock:/var/lib/webdav/lock:Z
+Volume=/usr/share/webdav/httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
+
+Exec=/usr/local/apache2/bin/httpd -DFOREGROUND
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target
