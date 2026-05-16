@@ -21,9 +21,13 @@ echo "==> Starting services..."
 su - httpd -c "systemctl --user start webdav.service"
 su - experiments -c "systemctl --user start postgres.service"
 
-echo "==> Enabling auto-update timers..."
+echo "==> Enabling podman auto-update timers..."
 
 su - httpd -c "systemctl --user enable podman-auto-update.timer"
 su - experiments -c "systemctl --user enable podman-auto-update.timer"
 
-echo "✅ User services initialized"
+echo "==> Enabling bootc auto-update timer..."
+
+systemctl enable bootc-fetch-apply-updates.timer
+
+echo "✅ User services + updates initialized"
