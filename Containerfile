@@ -45,5 +45,8 @@ COPY pg_hba.conf /usr/share/postgres/pg_hba.conf
 COPY webdav.container /etc/containers/systemd/users/httpd/webdav.container
 COPY postgres.container /etc/containers/systemd/users/experiments/postgres.container
 
-COPY setup.sh /usr/libexec/setup.sh
-RUN chmod +x /usr/libexec/setup.sh && /usr/libexec/setup.sh
+COPY setup-users.sh /usr/bin/setup-users.sh
+RUN chmod +x /usr/bin/setup-users.sh
+
+COPY setup-users.service /etc/systemd/system/setup-users.service
+RUN systemctl enable setup-users.service

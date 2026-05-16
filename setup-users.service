@@ -1,0 +1,11 @@
+[Unit]
+Description=Initialize rootless user services
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/setup-users.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
