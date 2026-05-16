@@ -1,0 +1,55 @@
+
+{
+	email acme@varuniyer.net
+
+	log access {
+		output file /var/log/caddy/access.log {
+			roll_size 50MiB
+			roll_keep 3
+		}
+		format json
+	}
+}
+
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		X-XSS-Protection "0"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
+varuniyer.net {
+	import security_headers
+
+	root * /usr/share/caddy
+
+	@assets path *.webp *.css *.js
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+	header Content-Security-Policy "default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none';"
+
+	file_server {
+		precompressed br gzip
+	}
+}
+
+varuniyer.info, varuniyer.me, www.varuniyer.net, www.varuniyer.info, www.varuniyer.me {
+	redir https://varuniyer.net permanent
+}
+
+dav.varuniyer.net {
+	import security_headers
+	basic_auth {
+		davuser "$2a$14$dnEprp8qLkriRtByKw3oxOC5riWA2Eaxf18scp6PdjGqaRgiwcVfi"
+	}
+	reverse_proxy 127.0.0.1:8080
+}
+
+mta-sts.varuniyer.net {
+	import security_headers
+	@mta-sts path /.well-known/mta-sts.txt
+	respond @mta-sts "version: STSv1\nmode: enforce\nmx: mx1.forwardemail.net\nmx: mx2.forwardemail.net\nmax_age: 2419200" 200
+	header @mta-sts Content-Type "text/plain; charset=utf-8"
+}
