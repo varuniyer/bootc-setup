@@ -1,0 +1,33 @@
+<p class="pub-note">* equal contribution</p>
+<ol class="publications-list">
+  {{ range hugo.Data.publications }}
+  <li class="pub-item">
+    <h2 class="pub-title">
+      {{ if .url }}<a href="{{ .url }}">{{ .title }}</a>{{ else }}{{ .title }}{{ end }}
+    </h2>
+    <div class="pub-meta">
+      {{ $ec := .equal_contrib -}}
+      {{ range $i, $author := .authors -}}
+        {{- if $i }}, {{ end -}}
+        {{- if eq $author $.Site.Params.name }}<strong>{{ $author }}{{ if in $ec $i }}*{{ end }}</strong>{{ else }}{{ $author }}{{ if in $ec $i }}*{{ end }}{{ end -}}
+      {{- end }}.
+      <span class="pub-venue">{{ or .booktitle .journal }}</span>
+      <span class="pub-year">{{ .year }}</span>
+      {{ with .award }}
+      <span class="pub-award">
+        {{ if eq . "Honorable Mention" }}
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+        </svg>
+        {{ else }}
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M12 1L9.5 8.5H2l6 4.5-2.5 7.5L12 16l6.5 4.5-2.5-7.5 6-4.5h-7.5L12 1z"/>
+        </svg>
+        {{ end }}
+        {{ . }}
+      </span>
+      {{ end }}
+    </div>
+  </li>
+  {{ end }}
+</ol>

@@ -1,0 +1,27 @@
+- key: huang-etal-2023-paraamr
+  title: "ParaAMR: A Large-Scale Syntactically Diverse Paraphrase Dataset by AMR Back-Translation"
+  authors:
+    - "Kuan-Hao Huang"
+    - "Varun Iyer"
+    - "I-Hung Hsu"
+    - "Anoop Kumar"
+    - "Kai-Wei Chang"
+    - "Aram Galstyan"
+  booktitle: "Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics"
+  year: 2023
+  url: "https://aclanthology.org/2023.acl-long.447/"
+  award: "Area Chair Award"
+
+- key: huang-etal-2022-unsupervised
+  title: "Unsupervised Syntactically Controlled Paraphrase Generation with Abstract Meaning Representations"
+  equal_contrib: [0, 1]
+  authors:
+    - "Kuan-Hao Huang"
+    - "Varun Iyer"
+    - "Anoop Kumar"
+    - "Sriram Venkatapathy"
+    - "Kai-Wei Chang"
+    - "Aram Galstyan"
+  booktitle: "Findings of the Association for Computational Linguistics: EMNLP"
+  year: 2022
+  url: "https://aclanthology.org/2022.findings-emnlp.111/"

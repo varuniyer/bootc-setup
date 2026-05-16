@@ -1,0 +1,29 @@
+baseURL = "https://varuniyer.net/"
+locale = "en-US"
+title = "Varun Iyer"
+staticDir = ["static"]
+publishDir = "public"
+disableKinds = ["taxonomy", "term"]
+disablePathToLower = true
+
+[params]
+  name        = "Varun Iyer"
+  role        = "CS PhD student"
+  university  = "UIC"
+  universityURL = "https://cs.uic.edu/"
+  description = "NLP researcher"
+  profilePicture = "/profile.webp"
+  email       = "varun@varuniyer.net"
+  github      = "https://github.com/varuniyer"
+  linkedin    = "https://linkedin.com/in/varuniyer1"
+  scholar     = "https://scholar.google.com/citations?user=TbpEa3cAAAAJ"
+
+[[menus.main]]
+  name   = "Publications"
+  url    = "/publications/"
+  weight = 1
+
+[[menus.main]]
+  name   = "CV"
+  url    = "/CV.pdf"
+  weight = 2

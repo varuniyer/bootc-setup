@@ -1,0 +1,15 @@
+{{/* Email obfuscation — visible label rendered inline; href is set by
+     assets/js/email.js on focus/hover. Bots scraping raw HTML see the
+     random words spliced into the address; humans see them hidden via
+     .email-obf in main.css. */}}
+{{ $mail := printf "%s" (.Get "mailto") }}
+
+{{ $randomWords := slice "z" "y" "h" "a" "j" "k" "m" "wx" "me" "us" "up" "so" "by" "if" "it" "at" "dm" "an" "be" "do" "bag" "bat" "bit" "bet" "bun" "bus" "but" "dot" "duh" "hix" "dig" "dim" "zen" "did" "fit" "fan" "fin" }}
+{{ $rws := shuffle $randomWords }}
+{{ $w1 := index $rws 0 }}{{ $w2 := index $rws 1 }}{{ $w3 := index $rws 2 }}
+
+{{ $pos := index (shuffle (seq (sub (len $mail) 1))) 0 }}
+{{ $label := printf "%s<span class=\"email-obf\">%s%s%s</span>%s" (substr $mail 0 $pos) $w1 $w2 $w3 (substr $mail $pos (sub (len $mail) 1)) }}
+{{ $b64 := $mail | base64Encode }}
+
+<a href="#" data-contact="{{ $b64 }}" rel="nofollow">{{ $label | safeHTML }}</a>
