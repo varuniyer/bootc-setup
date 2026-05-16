@@ -52,9 +52,6 @@ COPY webdav.container /etc/containers/systemd/users/httpd/webdav.container
 COPY postgres.container /etc/containers/systemd/users/experiments/postgres.container
 
 # Setup scripts
-COPY setup.sh /usr/libexec/setup.sh
-RUN chmod +x /usr/libexec/setup.sh && /usr/libexec/setup.sh
-
 COPY setup-users.sh /usr/bin/setup-users.sh
 RUN chmod +x /usr/bin/setup-users.sh
 
