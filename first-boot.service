@@ -4,7 +4,7 @@ After=multi-user.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/libexec/setup-firstboot.sh
+ExecStart=/usr/libexec/first-boot.sh
 RemainAfterExit=yes
 
 [Install]

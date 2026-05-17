@@ -11,6 +11,7 @@ sudo rm -rf /run/libpod /tmp/storage-run-*
 rm -f "$RAW"
 truncate -s "$SIZE" "$RAW"
 
+sudo podman pull $IMAGE
 sudo podman run --rm --privileged \
     --pid=host --ipc=host \
     --security-opt label=type:unconfined_t \
