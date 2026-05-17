@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "==> Creating users..."
-
 id -u httpd &>/dev/null || \
     useradd -m -d /var/home/httpd -s /usr/sbin/nologin httpd
 
@@ -41,8 +39,6 @@ chmod 0600 /var/home/httpd/.ssh/authorized_keys
 # ----------------------------
 # Filesystem setup
 # ----------------------------
-echo "==> Setting up filesystem..."
-
 mkdir -p /var/lib/webdav/data
 mkdir -p /var/lib/webdav/lock
 
@@ -68,34 +64,20 @@ chmod 0750 /var/log/caddy
 # ----------------------------
 # Runtime setup (containers + systemd)
 # ----------------------------
-echo "==> Enabling rootless containers..."
-
 ujust set-container-userns on
-
-echo "==> Enabling linger..."
-
 loginctl enable-linger httpd
 loginctl enable-linger experiments
-
-echo "==> Reloading user systemd..."
-
 su - httpd -c "systemctl --user daemon-reload"
 su - experiments -c "systemctl --user daemon-reload"
 
-echo "==> Trusting container images..."
-
 run0 podman image trust set -t accept docker.io/library/httpd
 run0 podman image trust set -t accept docker.io/library/postgres
-
-echo "==> Enabling and starting services..."
 
 su - httpd -c "systemctl --user enable webdav.service"
 su - experiments -c "systemctl --user enable postgres.service"
 
 su - httpd -c "systemctl --user start webdav.service"
 su - experiments -c "systemctl --user start postgres.service"
-
-echo "==> Enabling auto-update timers..."
 
 su - httpd -c "systemctl --user enable podman-auto-update.timer"
 su - experiments -c "systemctl --user enable podman-auto-update.timer"
@@ -106,8 +88,6 @@ systemctl enable bootc-fetch-apply-updates.timer
 # ----------------------------
 # Post-install Secureblue setup
 # ----------------------------
-echo "==> Running Secureblue post-install hardening..."
-
 ujust enroll-secureblue-secure-boot-key
 ujust set-kargs-hardening
 ujust bios
@@ -116,8 +96,6 @@ ujust toggle-mac-randomization
 ujust toggle-bash-environment-lockdown
 ujust setup-luks-tpm-unlock
 
-echo "==> Final Secureblue audit..."
-
-ujust audit-secureblue
-
-echo "✅ System fully initialized"
+ujust audit-secureblue | tee /var/log/secureblue-audit.log
+chown root:experiments /var/log/secureblue-audit.log
+chmod 0640 /var/log/secureblue-audit.log
