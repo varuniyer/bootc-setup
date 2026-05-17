@@ -84,6 +84,9 @@ su - experiments -c "systemctl --user enable podman-auto-update.timer"
 # ----------------------------
 # Post-install Secureblue setup
 # ----------------------------
+ujust toggle-mac-randomization
+ujust toggle-bash-environment-lockdown
+ujust setup-usbguard
 ujust enroll-secureblue-secure-boot-key
 ujust set-kargs-hardening
 ujust bios

@@ -16,7 +16,3 @@ jq --arg key /etc/containers/keys/cosign.pub '
   }]
 ' /etc/containers/policy.json > "$tmp"
 mv "$tmp" /etc/containers/policy.json
-
-ujust toggle-mac-randomization
-ujust toggle-bash-environment-lockdown
-ujust setup-usbguard
