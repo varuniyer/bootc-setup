@@ -53,13 +53,23 @@ RUN echo '{ "image": "ghcr.io/varuniyer/bootc-setup:latest" }' > /etc/bootc/boot
 COPY webdav.container /etc/containers/systemd/users/httpd/webdav.container
 COPY postgres.container /etc/containers/systemd/users/experiments/postgres.container
 
-# Setup script
-COPY setup.sh /usr/libexec/setup.sh
-RUN chmod +x /usr/libexec/setup.sh
+# Container signature policy
+COPY containers-policy/policy.json /etc/containers/policy.json
+COPY containers-policy/cosign.pub /etc/containers/keys/cosign.pub
+COPY containers-policy/registries.d/ /etc/containers/registries.d/
+
+# Build-time setup (file edits via ujust)
+COPY setup-build.sh /usr/libexec/setup-build.sh
+RUN chmod +x /usr/libexec/setup-build.sh && /usr/libexec/setup-build.sh
+
+# First-boot setup script
+COPY setup-firstboot.sh /usr/libexec/setup-firstboot.sh
+RUN chmod +x /usr/libexec/setup-firstboot.sh
 
 # Systemd bootstrap service
 COPY setup.service /etc/systemd/system/setup.service
 RUN systemctl enable setup.service
+RUN systemctl enable bootc-fetch-apply-updates.timer
 
 # Reboot on update
 RUN mkdir -p /etc/systemd/system/bootc-fetch-apply-updates.service.d

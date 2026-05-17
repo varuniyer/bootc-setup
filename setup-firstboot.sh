@@ -64,7 +64,6 @@ chmod 0750 /var/log/caddy
 # ----------------------------
 # Runtime setup (containers + systemd)
 # ----------------------------
-ujust set-container-userns on
 loginctl enable-linger httpd
 loginctl enable-linger experiments
 su - httpd -c "systemctl --user daemon-reload"
@@ -82,8 +81,6 @@ su - experiments -c "systemctl --user start postgres.service"
 su - httpd -c "systemctl --user enable podman-auto-update.timer"
 su - experiments -c "systemctl --user enable podman-auto-update.timer"
 
-systemctl enable bootc-fetch-apply-updates.timer
-
 
 # ----------------------------
 # Post-install Secureblue setup
@@ -91,11 +88,8 @@ systemctl enable bootc-fetch-apply-updates.timer
 ujust enroll-secureblue-secure-boot-key
 ujust set-kargs-hardening
 ujust bios
-ujust setup-usbguard
-ujust toggle-mac-randomization
-ujust toggle-bash-environment-lockdown
 ujust setup-luks-tpm-unlock
 
 ujust audit-secureblue | tee /var/log/secureblue-audit.log
-chown root:experiments /var/log/secureblue-audit.log
+chown root:httpd /var/log/secureblue-audit.log
 chmod 0640 /var/log/secureblue-audit.log
