@@ -53,6 +53,9 @@ RUN echo '{ "image": "ghcr.io/varuniyer/bootc-setup:latest" }' > /etc/bootc/boot
 COPY webdav.container /etc/containers/systemd/users/httpd/webdav.container
 COPY postgres.container /etc/containers/systemd/users/experiments/postgres.container
 
+# Tunnel-only SSH access for experiments
+RUN printf 'Match User experiments\n    AllowTcpForwarding yes\n    PermitOpen 127.0.0.1:5432\n' > /etc/ssh/sshd_config.d/30-experiments.conf
+
 # Cosign material for signature verification
 COPY cosign.pub /etc/containers/keys/cosign.pub
 RUN printf 'docker:\n  ghcr.io:\n    use-sigstore-attachments: true\n' > /etc/containers/registries.d/ghcr.yaml
