@@ -4,10 +4,10 @@
 FROM ghcr.io/gohugoio/hugo:latest AS hugo
 
 WORKDIR /src
-
 COPY website/ .
 RUN mkdir -p public
 RUN hugo build --minify
+
 
 # --------------------------------------
 # Stage 2: Compression
@@ -25,13 +25,14 @@ RUN find public -type f \( \
       -name '*.css' -o \
       -name '*.js' \
     \) \
-    -exec gzip --keep --best {} \; \
-    -exec brotli --keep --best {} \;
+    -exec gzip --best --keep {} \; \
+    -exec brotli --best --keep {} \;
+
 
 # --------------------------------------
 # Stage 3: Final bootc image
 # --------------------------------------
-FROM quay.io/fedora/fedora-bootc:latest
+FROM ghcr.io/secureblue/securecore-main-hardened:latest
 
 # Static site
 COPY --from=compress /work/public /usr/share/caddy
@@ -44,24 +45,23 @@ RUN mkdir -p /usr/share/postgres
 COPY postgresql.conf /usr/share/postgres/postgresql.conf
 COPY pg_hba.conf /usr/share/postgres/pg_hba.conf
 
-# bootc tracking config
-RUN mkdir -p /etc/bootc && echo '{ "image": "ghcr.io/varuniyer/bootc-setup:latest" }' > /etc/bootc/bootc.json
+# bootc tracking
+RUN mkdir -p /etc/bootc
+RUN echo '{ "image": "ghcr.io/varuniyer/bootc-setup:latest" }' > /etc/bootc/bootc.json
 
 # Quadlets
 COPY webdav.container /etc/containers/systemd/users/httpd/webdav.container
 COPY postgres.container /etc/containers/systemd/users/experiments/postgres.container
 
-# Setup scripts
-COPY setup-users.sh /usr/bin/setup-users.sh
-RUN chmod +x /usr/bin/setup-users.sh
+# Setup script
+COPY setup.sh /usr/libexec/setup.sh
+RUN chmod +x /usr/libexec/setup.sh
 
-COPY setup-users.service /etc/systemd/system/setup-users.service
-RUN systemctl enable setup-users.service
+# Systemd bootstrap service
+COPY setup.service /etc/systemd/system/setup.service
+RUN systemctl enable setup.service
 
-# Enable reboot after bootc update
+# Reboot on update
 RUN mkdir -p /etc/systemd/system/bootc-fetch-apply-updates.service.d
-RUN cat <<EOF > /etc/systemd/system/bootc-fetch-apply-updates.service.d/override.conf
-[Service]
-ExecStart=
-ExecStart=/usr/bin/bootc-fetch-apply-updates --reboot
-EOF
+RUN printf "[Service]\nExecStart=\nExecStart=/usr/bin/bootc-fetch-apply-updates --reboot\n" \
+    > /etc/systemd/system/bootc-fetch-apply-updates.service.d/override.conf
