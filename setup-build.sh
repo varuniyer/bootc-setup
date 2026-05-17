@@ -4,7 +4,7 @@ set -euo pipefail
 podman image trust set -t accept docker.io/library/httpd
 podman image trust set -t accept docker.io/library/postgres
 podman image trust set -t sigstoreSigned \
-    --pubkeyfile /etc/containers/keys/cosign.pub \
+    --pubkeysfile /etc/containers/keys/cosign.pub \
     ghcr.io/varuniyer/bootc-setup
 
 tmp=$(mktemp)
