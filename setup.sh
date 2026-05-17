@@ -32,6 +32,7 @@ jq --arg key /etc/containers/keys/cosign.pub '
     }]
 ' /etc/containers/policy.json > "$tmp"
 mv "$tmp" /etc/containers/policy.json
+chmod 0644 /etc/containers/policy.json
 
 
 # ----------------------------
