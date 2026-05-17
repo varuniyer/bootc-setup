@@ -1,15 +1,15 @@
 [Unit]
-Description=PostgreSQL 18 (experiments user)
+Description=PostgreSQL 17 (experiments user)
 After=network.target
 
 [Container]
-Image=docker.io/library/postgres:18-alpine
+Image=docker.io/library/postgres:17-alpine
 ContainerName=postgres
 AutoUpdate=registry
 
 PublishPort=127.0.0.1:5432:5432
 
-Volume=/var/lib/postgres/experiments:/var/lib/postgresql:Z
+Volume=/var/lib/postgres/experiments:/var/lib/postgresql/data:Z
 Volume=/usr/share/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
 Volume=/usr/share/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
 
