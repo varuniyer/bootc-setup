@@ -102,5 +102,5 @@ systemctl enable bootc-fetch-apply-updates.timer
 systemctl enable caddy.service
 
 mkdir -p /etc/systemd/system/bootc-fetch-apply-updates.service.d
-printf '[Service]\nExecStart=\nExecStart=/usr/bin/bootc-fetch-apply-updates --reboot\n' \
+printf '[Service]\nExecStart=\nExecStart=/usr/bin/bootc upgrade --apply\n' \
     > /etc/systemd/system/bootc-fetch-apply-updates.service.d/override.conf
