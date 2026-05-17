@@ -46,7 +46,6 @@ COPY pg_hba.conf /usr/share/postgres/pg_hba.conf
 # Quadlets
 COPY webdav.container /etc/containers/systemd/users/httpd/webdav.container
 COPY postgres.container /etc/containers/systemd/users/experiments/postgres.container
-COPY postgres.network /etc/containers/systemd/users/experiments/postgres.network
 
 # Cosign material
 COPY cosign.pub /etc/containers/keys/cosign.pub
