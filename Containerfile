@@ -53,8 +53,7 @@ RUN echo '{ "image": "ghcr.io/varuniyer/bootc-setup:latest" }' > /etc/bootc/boot
 COPY webdav.container /etc/containers/systemd/users/httpd/webdav.container
 COPY postgres.container /etc/containers/systemd/users/experiments/postgres.container
 
-# Container signature policy
-COPY containers-policy/policy.json /etc/containers/policy.json
+# Cosign material for signature verification
 COPY containers-policy/cosign.pub /etc/containers/keys/cosign.pub
 COPY containers-policy/registries.d/ /etc/containers/registries.d/
 
