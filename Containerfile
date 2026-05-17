@@ -2,8 +2,8 @@
 # Stage 1: Hugo build
 # --------------------------------------
 FROM ghcr.io/gohugoio/hugo:latest AS hugo
-
-WORKDIR /tmp/src
+USER root
+WORKDIR /src
 COPY website/ .
 RUN mkdir -p public
 RUN hugo build --minify
@@ -17,7 +17,7 @@ FROM docker.io/library/alpine:latest AS compress
 RUN apk add --no-cache gzip brotli findutils
 
 WORKDIR /work
-COPY --from=hugo /tmp/src/public ./public
+COPY --from=hugo /src/public ./public
 
 RUN find public -type f \( \
       -name '*.html' -o \
