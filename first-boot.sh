@@ -8,9 +8,8 @@ user_systemctl() {
 }
 
 for u in httpd experiments; do
-    user_systemctl "$u" daemon-reload
-    user_systemctl "$u" enable podman-auto-update.timer
+    user_systemctl "$u" enable --now podman-auto-update.timer
 done
 
-user_systemctl httpd       enable --now webdav.service
-user_systemctl experiments enable --now postgres.service
+user_systemctl httpd       start webdav.service
+user_systemctl experiments start postgres.service
