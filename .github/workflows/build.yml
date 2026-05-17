@@ -1,14 +1,12 @@
-name: Build and Push bootc Image
+name: Build and Sign bootc Image
 
 on:
   push:
-    branches: [ "main" ]
-  schedule:
-    - cron: "0 3 * * *"   # daily rebuild for base image updates
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  build:
+  build-sign:
     runs-on: ubuntu-latest
 
     permissions:
@@ -16,49 +14,43 @@ jobs:
       packages: write
 
     steps:
-      # ----------------------------
-      # Checkout repo
-      # ----------------------------
-      - name: Checkout
-        uses: actions/checkout@v5
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      # ----------------------------
-      # Set up buildx
-      # ----------------------------
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+      - name: Install Podman + skopeo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman skopeo jq
 
-      # ----------------------------
-      # Login to GHCR
-      # ----------------------------
-      - name: Login to GHCR
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Log in to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+          podman login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      # ----------------------------
-      # Extract metadata (tags)
-      # ----------------------------
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=raw,value=latest
-            type=sha
+      - name: Build image
+        run: |
+          podman build \
+            -t ghcr.io/varuniyer/bootc-setup:latest .
 
-      # ----------------------------
-      # Build + push image
-      # ----------------------------
-      - name: Build and push
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: true
-          file: ./Containerfile
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+      - name: Push image
+        run: |
+          podman push ghcr.io/varuniyer/bootc-setup:latest
 
+      - name: Get image digest
+        id: digest
+        run: |
+          DIGEST=$(skopeo inspect docker://ghcr.io/varuniyer/bootc-setup:latest | jq -r .Digest)
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Decode cosign key
+        run: |
+          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" | base64 -d > cosign.key
+
+      - name: Sign image (by digest)
+        run: |
+          cosign sign --yes \
+            --key cosign.key \
+            ghcr.io/varuniyer/bootc-setup@${{ steps.digest.outputs.digest }}
