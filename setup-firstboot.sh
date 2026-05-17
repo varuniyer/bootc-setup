@@ -64,13 +64,12 @@ chmod 0750 /var/log/caddy
 # ----------------------------
 # Runtime setup (containers + systemd)
 # ----------------------------
+ujust set-container-userns on
+
 loginctl enable-linger httpd
 loginctl enable-linger experiments
 su - httpd -c "systemctl --user daemon-reload"
 su - experiments -c "systemctl --user daemon-reload"
-
-run0 podman image trust set -t accept docker.io/library/httpd
-run0 podman image trust set -t accept docker.io/library/postgres
 
 su - httpd -c "systemctl --user enable webdav.service"
 su - experiments -c "systemctl --user enable postgres.service"
