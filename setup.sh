@@ -99,6 +99,8 @@ chmod 0750 /var/log/caddy
 chmod +x /usr/libexec/first-boot.sh
 systemctl enable first-boot.service
 systemctl enable bootc-fetch-apply-updates.timer
+systemctl enable caddy.service
+systemctl mask bootloader-update.service rpm-ostreed.service
 
 mkdir -p /etc/systemd/system/bootc-fetch-apply-updates.service.d
 printf '[Service]\nExecStart=\nExecStart=/usr/bin/bootc-fetch-apply-updates --reboot\n' \
