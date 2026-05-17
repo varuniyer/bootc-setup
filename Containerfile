@@ -32,7 +32,7 @@ RUN find public -type f \( \
 # --------------------------------------
 # Stage 3: Final bootc image
 # --------------------------------------
-FROM ghcr.io/secureblue/securecore-main-hardened:latest
+FROM quay.io/fedora/fedora-bootc:latest
 
 # Static site
 COPY --from=compress /work/public /usr/share/caddy

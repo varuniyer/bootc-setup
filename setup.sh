@@ -28,28 +28,22 @@ podman image trust set -t sigstoreSigned \
     --pubkeysfile /etc/containers/keys/cosign.pub \
     ghcr.io/varuniyer/bootc-setup
 
-tmp=$(mktemp)
-jq --arg key /etc/containers/keys/cosign.pub '
-  .transports["containers-storage"][""] = [{
-    "type": "sigstoreSigned",
-    "keyPath": $key,
-    "signedIdentity": { "type": "matchRepository" }
-  }]
-' /etc/containers/policy.json > "$tmp"
-mv "$tmp" /etc/containers/policy.json
-
 
 # ----------------------------
-# Users
+# Users (nologin shells; experiments tunnels postgres over SSH)
 # ----------------------------
 mkdir -p /var/spool/mail
-useradd -m -d /var/home/httpd       -s /bin/bash              httpd
-useradd -m -d /var/home/experiments -s /bin/bash              experiments
-useradd -m -d /var/home/admin       -s /bin/bash -G wheel     admin
+useradd -m -d /var/home/httpd       -s /usr/sbin/nologin httpd
+useradd -m -d /var/home/experiments -s /usr/sbin/nologin experiments
+echo '/usr/sbin/nologin' >> /etc/shells
+
+# Rootless container userns mapping (non-overlapping 64k ranges per user)
+printf 'httpd:100000:65536\nexperiments:165536:65536\n' >> /etc/subuid
+printf 'httpd:100000:65536\nexperiments:165536:65536\n' >> /etc/subgid
 
 
 # ----------------------------
-# SSH (keys live in /etc so they update on bootc upgrade)
+# SSH (key in /etc so it updates on bootc upgrade; experiments port-forward only)
 # ----------------------------
 mkdir -p /etc/ssh/authorized_keys.d /etc/ssh/sshd_config.d
 
@@ -57,13 +51,10 @@ cat > /etc/ssh/authorized_keys.d/experiments <<'EOF'
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPuAduuMXxrNmk6xw9/0TNQ9K+Z0R9ODjGeyw+5+AcJB
 EOF
 
-cat > /etc/ssh/authorized_keys.d/admin <<'EOF'
-sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIAqvqfe/Qi/zXl2StxCA4piiBC2uuVAuAOC6u+TfMafsAAAACXNzaDp2dWx0cg==
-sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIJ1OrjNP1ysix4konD3sk7Gd+hdt+I+5sUc0SJNRQksjAAAACXNzaDp2dWx0cg==
-EOF
-
 printf 'AuthorizedKeysFile /etc/ssh/authorized_keys.d/%%u\n' \
     > /etc/ssh/sshd_config.d/30-authkeys.conf
+printf 'Match User experiments\n    AllowTcpForwarding yes\n    PermitOpen 127.0.0.1:5432\n' \
+    > /etc/ssh/sshd_config.d/40-experiments.conf
 
 
 # ----------------------------
@@ -100,7 +91,6 @@ chmod +x /usr/libexec/first-boot.sh
 systemctl enable first-boot.service
 systemctl enable bootc-fetch-apply-updates.timer
 systemctl enable caddy.service
-systemctl mask bootloader-update.service rpm-ostreed.service
 
 mkdir -p /etc/systemd/system/bootc-fetch-apply-updates.service.d
 printf '[Service]\nExecStart=\nExecStart=/usr/bin/bootc-fetch-apply-updates --reboot\n' \
