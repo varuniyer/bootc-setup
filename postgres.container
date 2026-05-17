@@ -13,6 +13,7 @@ PublishPort=127.0.0.1:5432:5432
 Volume=/var/lib/postgres/experiments:/var/lib/postgresql:Z
 Volume=/usr/share/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
 Volume=/usr/share/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+Tmpfs=/var/lib/postgresql/data
 
 Environment=POSTGRES_DB=experiments
 Environment=POSTGRES_USER=experiments
