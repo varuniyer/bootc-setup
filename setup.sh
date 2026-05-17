@@ -2,6 +2,13 @@
 set -euo pipefail
 
 # ----------------------------
+# Packages
+# ----------------------------
+dnf install -y caddy
+dnf clean all
+
+
+# ----------------------------
 # System files
 # ----------------------------
 mkdir -p /etc/bootc
@@ -35,6 +42,7 @@ mv "$tmp" /etc/containers/policy.json
 # ----------------------------
 # Users
 # ----------------------------
+mkdir -p /var/spool/mail
 useradd -m -d /var/home/httpd       -s /bin/bash              httpd
 useradd -m -d /var/home/experiments -s /bin/bash              experiments
 useradd -m -d /var/home/admin       -s /bin/bash -G wheel     admin
