@@ -54,8 +54,8 @@ COPY webdav.container /etc/containers/systemd/users/httpd/webdav.container
 COPY postgres.container /etc/containers/systemd/users/experiments/postgres.container
 
 # Cosign material for signature verification
-COPY containers-policy/cosign.pub /etc/containers/keys/cosign.pub
-COPY containers-policy/registries.d/ /etc/containers/registries.d/
+COPY cosign.pub /etc/containers/keys/cosign.pub
+RUN printf 'docker:\n  ghcr.io:\n    use-sigstore-attachments: true\n' > /etc/containers/registries.d/ghcr.yaml
 
 # Build-time setup (file edits via ujust)
 COPY setup-build.sh /usr/libexec/setup-build.sh
