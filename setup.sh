@@ -30,12 +30,16 @@ podman image trust set -t sigstoreSigned \
 
 
 # ----------------------------
-# Users (nologin shells; experiments tunnels postgres over SSH)
+# Users (nologin for quadlet users; admin gets shell + passwordless wheel)
 # ----------------------------
 mkdir -p /var/spool/mail
-useradd -m -d /var/home/httpd       -s /usr/sbin/nologin httpd
-useradd -m -d /var/home/experiments -s /usr/sbin/nologin experiments
+useradd -m -d /var/home/httpd       -s /usr/sbin/nologin     httpd
+useradd -m -d /var/home/experiments -s /usr/sbin/nologin     experiments
+useradd -m -d /var/home/admin       -s /bin/bash -G wheel    admin
 echo '/usr/sbin/nologin' >> /etc/shells
+
+echo '%wheel ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/wheel-nopasswd
+chmod 0440 /etc/sudoers.d/wheel-nopasswd
 
 # Rootless container userns mapping (non-overlapping 64k ranges per user)
 printf 'httpd:100000:65536\nexperiments:165536:65536\n' >> /etc/subuid
@@ -49,6 +53,11 @@ mkdir -p /etc/ssh/authorized_keys.d /etc/ssh/sshd_config.d
 
 cat > /etc/ssh/authorized_keys.d/experiments <<'EOF'
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPuAduuMXxrNmk6xw9/0TNQ9K+Z0R9ODjGeyw+5+AcJB
+EOF
+
+cat > /etc/ssh/authorized_keys.d/admin <<'EOF'
+sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIAqvqfe/Qi/zXl2StxCA4piiBC2uuVAuAOC6u+TfMafsAAAACXNzaDp2dWx0cg==
+sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIJ1OrjNP1ysix4konD3sk7Gd+hdt+I+5sUc0SJNRQksjAAAACXNzaDp2dWx0cg==
 EOF
 
 printf 'AuthorizedKeysFile /etc/ssh/authorized_keys.d/%%u\n' \
