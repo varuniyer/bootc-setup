@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SIZE="${1:-25G}"
+SIZE="40G"
 IMAGE="ghcr.io/varuniyer/bootc-setup:latest"
 OUT="$(pwd)/output"
 RAW="$OUT/disk.raw"
@@ -31,3 +31,11 @@ sudo podman run --rm --privileged \
             --via-loopback \
             /output/disk.raw
     "
+
+sudo podman run --rm \
+    -e HCLOUD_TOKEN="$1" \
+    -v "$OUT:/output:ro" \
+    ghcr.io/apricote/hcloud-upload-image:latest upload \
+    --image-path /output/disk.raw \
+    --architecture x86 \
+    --location fsn1
