@@ -13,16 +13,46 @@ dnf clean all
 # ----------------------------
 printf '\n[etc]\ntransient = true\n' >> /usr/lib/ostree/prepare-root.conf
 
-# Persist sshd host keys across boots (since /etc is transient)
-cat > /usr/lib/tmpfiles.d/ssh-host-keys.conf <<'EOF'
-d /var/lib/ssh 0700 root root -
-L+ /etc/ssh/ssh_host_rsa_key         - - - - /var/lib/ssh/ssh_host_rsa_key
-L+ /etc/ssh/ssh_host_rsa_key.pub     - - - - /var/lib/ssh/ssh_host_rsa_key.pub
-L+ /etc/ssh/ssh_host_ecdsa_key       - - - - /var/lib/ssh/ssh_host_ecdsa_key
-L+ /etc/ssh/ssh_host_ecdsa_key.pub   - - - - /var/lib/ssh/ssh_host_ecdsa_key.pub
-L+ /etc/ssh/ssh_host_ed25519_key     - - - - /var/lib/ssh/ssh_host_ed25519_key
-L+ /etc/ssh/ssh_host_ed25519_key.pub - - - - /var/lib/ssh/ssh_host_ed25519_key.pub
+# Persist sshd host keys in /var/lib/ssh. Symlinks at /etc/ssh hit a
+# sshd_keygen_t -> etc_t:lnk_file unlink denial, so skip the bundled
+# keygen units and read keys from /var/lib/ssh directly.
+systemctl mask sshd-keygen@rsa.service \
+               sshd-keygen@ecdsa.service \
+               sshd-keygen@ed25519.service
+
+mkdir -p /etc/ssh/sshd_config.d
+printf 'HostKey /var/lib/ssh/ssh_host_rsa_key\nHostKey /var/lib/ssh/ssh_host_ecdsa_key\nHostKey /var/lib/ssh/ssh_host_ed25519_key\n' \
+    > /etc/ssh/sshd_config.d/20-hostkeys.conf
+
+cat > /usr/libexec/sshd-keygen-persist <<'EOF'
+#!/bin/bash
+set -euo pipefail
+mkdir -p /var/lib/ssh
+for type in rsa ecdsa ed25519; do
+    key="/var/lib/ssh/ssh_host_${type}_key"
+    [ -s "$key" ] || ssh-keygen -q -t "$type" -f "$key" -C "" -N ""
+done
+chmod 0600 /var/lib/ssh/ssh_host_*_key
+chmod 0644 /var/lib/ssh/ssh_host_*_key.pub
+chcon -t sshd_key_t /var/lib/ssh/ssh_host_*
 EOF
+chmod +x /usr/libexec/sshd-keygen-persist
+
+cat > /etc/systemd/system/sshd-keygen-persist.service <<'EOF'
+[Unit]
+Description=Generate persistent SSH host keys in /var/lib/ssh
+Before=sshd.service
+After=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/sshd-keygen-persist
+
+[Install]
+WantedBy=sshd.service
+EOF
+systemctl enable sshd-keygen-persist.service
 
 mkdir -p /etc/bootc
 echo '{ "image": "ghcr.io/varuniyer/bootc-setup:latest" }' > /etc/bootc/bootc.json
