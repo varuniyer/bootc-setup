@@ -3,7 +3,7 @@ Description=Apache WebDAV (httpd user)
 After=network.target
 
 [Container]
-Image=docker.io/library/httpd:alpine
+Image=docker.io/library/httpd:latest
 ContainerName=webdav
 AutoUpdate=registry
 
