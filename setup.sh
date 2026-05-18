@@ -11,6 +11,8 @@ dnf clean all
 # ----------------------------
 # System files
 # ----------------------------
+printf '\n[etc]\ntransient = true\n' >> /usr/lib/ostree/prepare-root.conf
+
 mkdir -p /etc/bootc
 echo '{ "image": "ghcr.io/varuniyer/bootc-setup:latest" }' > /etc/bootc/bootc.json
 
