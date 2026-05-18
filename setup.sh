@@ -91,7 +91,7 @@ EOF
 
 printf 'AuthorizedKeysFile /etc/ssh/authorized_keys.d/%%u\n' \
     > /etc/ssh/sshd_config.d/30-authkeys.conf
-printf 'Match User experiments\n    AllowTcpForwarding yes\n    PermitOpen 127.0.0.1:5432\n' \
+printf 'Match User experiments\n    AllowTcpForwarding yes\n    PermitOpen 127.0.0.1:5432 [::1]:5432\n' \
     > /etc/ssh/sshd_config.d/40-experiments.conf
 
 
