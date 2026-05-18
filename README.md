@@ -4,7 +4,7 @@ bootc-based Fedora image for varuniyer.net. Runs the website, WebDAV, and a Post
 
 ## How it works
 
-- `Containerfile` builds on `quay.io/fedora/fedora-bootc:latest` and bakes in Caddy (web), Apache `mod_dav` (WebDAV), and Postgres.
+- `Containerfile` builds on `quay.io/fedora/fedora-bootc:latest`. Caddy (website) runs as a systemd service. Apache `mod_dav` (WebDAV) and Postgres each run as a rootless podman container under their own dedicated user (`httpd`, `experiments`), so the two stacks are isolated by uid.
 - On every push to `main`, GitHub Actions builds the image with `podman`, pushes it to `ghcr.io/varuniyer/bootc-setup:latest`, and rebuilds a GCP disk image as a recovery seed.
 - The running VM updates itself from GHCR via the `bootc-fetch-apply-updates` timer. The GCP image is only for new VMs and disaster recovery.
 
