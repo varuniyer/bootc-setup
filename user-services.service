@@ -1,6 +1,7 @@
 [Unit]
 Description=Enable and start rootless user services
-After=multi-user.target
+After=multi-user.target network-online.target
+Wants=network-online.target
 
 [Service]
 Type=oneshot
