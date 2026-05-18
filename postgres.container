@@ -7,6 +7,8 @@ Image=docker.io/library/postgres:17-alpine
 ContainerName=postgres
 AutoUpdate=registry
 
+UserNS=keep-id:uid=70,gid=70
+
 PublishPort=127.0.0.1:5432:5432
 
 Volume=/var/lib/postgres/experiments:/var/lib/postgresql/data:Z
