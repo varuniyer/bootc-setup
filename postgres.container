@@ -8,6 +8,7 @@ ContainerName=postgres
 AutoUpdate=registry
 
 PublishPort=127.0.0.1:5432:5432
+PublishPort=[::1]:5432:5432
 
 Volume=/var/lib/postgres/experiments:/var/lib/postgresql/data:Z
 Volume=/usr/share/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
