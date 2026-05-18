@@ -13,6 +13,11 @@ dnf clean all
 # ----------------------------
 printf '\n[etc]\ntransient = true\n' >> /usr/lib/ostree/prepare-root.conf
 
+# Rebake the initramfs so ostree-prepare-root picks up the [etc] section
+# (the upstream initramfs ships a snapshot of prepare-root.conf).
+KVER=$(basename /usr/lib/modules/*)
+dracut --no-hostonly --force --kver "$KVER" /usr/lib/modules/"$KVER"/initramfs.img
+
 # Persist sshd host keys in /var/lib/ssh. Symlinks at /etc/ssh hit a
 # sshd_keygen_t -> etc_t:lnk_file unlink denial, so skip the bundled
 # keygen units and read keys from /var/lib/ssh directly.
