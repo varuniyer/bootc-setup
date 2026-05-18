@@ -11,9 +11,10 @@ bootc-based Fedora image for varuniyer.net. Runs the website, WebDAV, and a Post
 ## Layout
 
 - `Containerfile`: image definition; final stage runs `setup.sh` once.
-- `setup.sh`: all build-time mutations (users, units, configs).
-- `Caddyfile`, `httpd.conf`, `postgresql.conf`, `pg_hba.conf`: service configs.
-- `postgres.container`, `webdav.container`: Quadlet units.
-- `user-services.{service,sh}`: boots user-mode services after `user@.service`.
+- `setup.sh`: all build-time mutations (users, unit enables, dirs, perms).
+- `Caddyfile`: Caddy (website) config; runs as a systemd service.
+- `webdav.container`, `httpd.conf`: rootless podman unit and config for Apache `mod_dav`, dropped into the `httpd` user's session.
+- `postgres.container`, `postgresql.conf`, `pg_hba.conf`: rootless podman unit and configs for Postgres, dropped into the `experiments` user's session.
+- `user-services.{service,sh}`: starts the per-user systemd instances at boot so the rootless containers come up without a login.
 - `website/`: static site sources (Hugo).
 - `build-disk.sh` and `.github/workflows/build.yml`: CI for GHCR push and GCP image build.
