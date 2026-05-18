@@ -13,10 +13,17 @@ dnf clean all
 # ----------------------------
 printf '\n[etc]\ntransient = true\n' >> /usr/lib/ostree/prepare-root.conf
 
-# Rebake the initramfs so ostree-prepare-root picks up the [etc] section
-# (the upstream initramfs ships a snapshot of prepare-root.conf).
+# Append a cpio overlay with the updated prepare-root.conf onto the
+# upstream initramfs. The kernel concatenates cpio archives at boot;
+# later entries override earlier ones, so ostree-prepare-root reads our
+# version. Avoids a full dracut rebuild which fails in this sandbox.
 KVER=$(basename /usr/lib/modules/*)
-dracut --no-hostonly --force --kver "$KVER" /usr/lib/modules/"$KVER"/initramfs.img
+overlay=$(mktemp -d)
+mkdir -p "$overlay/usr/lib/ostree"
+cp /usr/lib/ostree/prepare-root.conf "$overlay/usr/lib/ostree/prepare-root.conf"
+(cd "$overlay" && find . -mindepth 1 -print0 | cpio --null --create --format=newc --quiet | gzip) \
+    >> /usr/lib/modules/"$KVER"/initramfs.img
+rm -rf "$overlay"
 
 # Persist sshd host keys in /var/lib/ssh. Symlinks at /etc/ssh hit a
 # sshd_keygen_t -> etc_t:lnk_file unlink denial, so skip the bundled
