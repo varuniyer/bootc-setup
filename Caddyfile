@@ -50,6 +50,10 @@ dav.varuniyer.net {
 mta-sts.varuniyer.net {
 	import security_headers
 	@mta-sts path /.well-known/mta-sts.txt
-	respond @mta-sts "version: STSv1\nmode: enforce\nmx: mx1.forwardemail.net\nmx: mx2.forwardemail.net\nmax_age: 2419200" 200
+	respond @mta-sts `version: STSv1
+mode: enforce
+mx: mx1.forwardemail.net
+mx: mx2.forwardemail.net
+max_age: 2419200` 200
 	header @mta-sts Content-Type "text/plain; charset=utf-8"
 }
