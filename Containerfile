@@ -47,9 +47,6 @@ COPY pg_hba.conf /usr/share/postgres/pg_hba.conf
 COPY webdav.container /etc/containers/systemd/users/httpd/webdav.container
 COPY postgres.container /etc/containers/systemd/users/experiments/postgres.container
 
-# Cosign material
-COPY cosign.pub /etc/containers/keys/cosign.pub
-
 # Scripts and unit
 COPY setup.sh /usr/libexec/setup.sh
 COPY user-services.sh /usr/libexec/user-services.sh

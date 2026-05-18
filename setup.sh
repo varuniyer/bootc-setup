@@ -27,26 +27,6 @@ EOF
 mkdir -p /etc/bootc
 echo '{ "image": "ghcr.io/varuniyer/bootc-setup:latest" }' > /etc/bootc/bootc.json
 
-mkdir -p /etc/containers/registries.d
-printf 'docker:\n  ghcr.io:\n    use-sigstore-attachments: true\n' \
-    > /etc/containers/registries.d/ghcr.yaml
-
-
-# ----------------------------
-# Container signature policy
-# ----------------------------
-tmp=$(mktemp)
-jq --arg key /etc/containers/keys/cosign.pub '
-  (.transports.docker //= {})
-  | .transports.docker["ghcr.io/varuniyer/bootc-setup"] = [{
-      "type": "sigstoreSigned",
-      "keyPath": $key,
-      "signedIdentity": { "type": "matchRepository" }
-    }]
-' /etc/containers/policy.json > "$tmp"
-mv "$tmp" /etc/containers/policy.json
-chmod 0644 /etc/containers/policy.json
-
 
 # ----------------------------
 # Users (nologin for quadlet users; admin gets shell + passwordless wheel)

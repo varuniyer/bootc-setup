@@ -5,10 +5,13 @@ SIZE="40G"
 IMAGE="ghcr.io/varuniyer/bootc-setup:latest"
 OUT="$(pwd)/output"
 RAW="$OUT/disk.raw"
+TARBALL="$OUT/disk.tar.gz"
+GCS_BUCKET="bootc"
+IMAGE_NAME="bootc"
 
 mkdir -p "$OUT"
 sudo rm -rf /run/libpod /tmp/storage-run-*
-rm -f "$RAW"
+rm -f "$RAW" "$TARBALL"
 truncate -s "$SIZE" "$RAW"
 
 sudo podman pull $IMAGE
@@ -32,10 +35,11 @@ sudo podman run --rm --privileged \
             /output/disk.raw
     "
 
-sudo podman run --rm \
-    -e HCLOUD_TOKEN="$1" \
-    -v "$OUT:/output:ro" \
-    ghcr.io/apricote/hcloud-upload-image:latest upload \
-    --image-path /output/disk.raw \
-    --architecture x86 \
-    --location fsn1
+tar --format=oldgnu -Sczf "$TARBALL" -C "$OUT" disk.raw
+
+gsutil cp "$TARBALL" "gs://$GCS_BUCKET/$IMAGE_NAME.tar.gz"
+gcloud compute images delete "$IMAGE_NAME" --quiet || true
+gcloud compute images create "$IMAGE_NAME" \
+    --source-uri="gs://$GCS_BUCKET/$IMAGE_NAME.tar.gz" \
+    --guest-os-features=UEFI_COMPATIBLE
+gsutil rm "gs://$GCS_BUCKET/$IMAGE_NAME.tar.gz"

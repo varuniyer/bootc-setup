@@ -1,4 +1,4 @@
-name: Build and Sign bootc Image
+name: Build and Push bootc Image
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-sign:
+  build:
     runs-on: ubuntu-latest
 
     permissions:
@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y podman skopeo jq
+          sudo apt-get install -y podman
 
       - uses: docker/login-action@v4
         with:
@@ -33,18 +33,11 @@ jobs:
       - name: Push image
         run: podman push ghcr.io/varuniyer/bootc-setup:latest
 
-      - id: digest
-        name: Get image digest
-        run: |
-          DIGEST=$(skopeo inspect docker://ghcr.io/varuniyer/bootc-setup:latest | jq -r .Digest)
-          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - uses: sigstore/cosign-installer@v3
+      - uses: google-github-actions/setup-gcloud@v2
 
-      - name: Sign image
-        env:
-          COSIGN_PASSWORD: ""
-        run: |
-          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" | base64 -d > cosign.key
-          cosign sign --yes --key cosign.key \
-            ghcr.io/varuniyer/bootc-setup@${{ steps.digest.outputs.digest }}
+      - name: Build disk and publish to GCP
+        run: bash build-disk.sh
