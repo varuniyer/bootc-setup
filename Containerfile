@@ -52,8 +52,8 @@ COPY cosign.pub /etc/containers/keys/cosign.pub
 
 # Scripts and unit
 COPY setup.sh /usr/libexec/setup.sh
-COPY first-boot.sh /usr/libexec/first-boot.sh
-COPY first-boot.service /etc/systemd/system/first-boot.service
+COPY user-services.sh /usr/libexec/user-services.sh
+COPY user-services.service /etc/systemd/system/user-services.service
 
 # Single build-time mutation layer
 RUN bash /usr/libexec/setup.sh

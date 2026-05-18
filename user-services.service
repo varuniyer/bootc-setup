@@ -1,10 +1,10 @@
 [Unit]
-Description=Initial system setup (bootc + Secureblue)
+Description=Enable and start rootless user services
 After=multi-user.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/libexec/first-boot.sh
+ExecStart=/usr/libexec/user-services.sh
 RemainAfterExit=yes
 
 [Install]

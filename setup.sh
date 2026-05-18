@@ -13,6 +13,17 @@ dnf clean all
 # ----------------------------
 printf '\n[etc]\ntransient = true\n' >> /usr/lib/ostree/prepare-root.conf
 
+# Persist sshd host keys across boots (since /etc is transient)
+cat > /usr/lib/tmpfiles.d/ssh-host-keys.conf <<'EOF'
+d /var/lib/ssh 0700 root root -
+L+ /etc/ssh/ssh_host_rsa_key         - - - - /var/lib/ssh/ssh_host_rsa_key
+L+ /etc/ssh/ssh_host_rsa_key.pub     - - - - /var/lib/ssh/ssh_host_rsa_key.pub
+L+ /etc/ssh/ssh_host_ecdsa_key       - - - - /var/lib/ssh/ssh_host_ecdsa_key
+L+ /etc/ssh/ssh_host_ecdsa_key.pub   - - - - /var/lib/ssh/ssh_host_ecdsa_key.pub
+L+ /etc/ssh/ssh_host_ed25519_key     - - - - /var/lib/ssh/ssh_host_ed25519_key
+L+ /etc/ssh/ssh_host_ed25519_key.pub - - - - /var/lib/ssh/ssh_host_ed25519_key.pub
+EOF
+
 mkdir -p /etc/bootc
 echo '{ "image": "ghcr.io/varuniyer/bootc-setup:latest" }' > /etc/bootc/bootc.json
 
@@ -104,8 +115,8 @@ chmod 0750 /var/log/caddy
 # ----------------------------
 # Services and timers
 # ----------------------------
-chmod +x /usr/libexec/first-boot.sh
-systemctl enable first-boot.service
+chmod +x /usr/libexec/user-services.sh
+systemctl enable user-services.service
 systemctl enable bootc-fetch-apply-updates.timer
 systemctl enable caddy.service
 
