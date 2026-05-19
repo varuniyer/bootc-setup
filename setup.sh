@@ -11,19 +11,16 @@ dnf clean all
 # ----------------------------
 # System files
 # ----------------------------
+# Make /etc transient (tmpfs from /usr/etc each boot). Append [etc]
+# section, then rebuild the initramfs so ostree-prepare-root reads it
+# at early boot. /root is a symlink to /var/roothome but /var/roothome
+# is created by tmpfiles.d at first boot; materialize it for
+# dracut-install, then remove it so the image's /var stays empty.
 printf '\n[etc]\ntransient = true\n' >> /usr/lib/ostree/prepare-root.conf
-
-# Append a cpio overlay with the updated prepare-root.conf onto the
-# upstream initramfs. The kernel concatenates cpio archives at boot;
-# later entries override earlier ones, so ostree-prepare-root reads our
-# version. Avoids a full dracut rebuild which fails in this sandbox.
 KVER=$(basename /usr/lib/modules/*)
-overlay=$(mktemp -d)
-mkdir -p "$overlay/usr/lib/ostree"
-cp /usr/lib/ostree/prepare-root.conf "$overlay/usr/lib/ostree/prepare-root.conf"
-(cd "$overlay" && find . -mindepth 1 -print0 | cpio --null --create --format=newc --quiet | gzip) \
-    >> /usr/lib/modules/"$KVER"/initramfs.img
-rm -rf "$overlay"
+mkdir -p /var/roothome
+dracut --no-hostonly --force --kver "$KVER" /usr/lib/modules/"$KVER"/initramfs.img
+rmdir /var/roothome
 
 # Persist sshd host keys in /var/lib/ssh. Symlinks at /etc/ssh hit a
 # sshd_keygen_t -> etc_t:lnk_file unlink denial, so skip the bundled
