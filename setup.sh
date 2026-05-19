@@ -79,10 +79,6 @@ echo '/usr/sbin/nologin' >> /etc/shells
 echo '%wheel ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/wheel-nopasswd
 chmod 0440 /etc/sudoers.d/wheel-nopasswd
 
-# Rootless container userns mapping (non-overlapping 64k ranges per user)
-printf 'httpd:100000:65536\nexperiments:165536:65536\n' >> /etc/subuid
-printf 'httpd:100000:65536\nexperiments:165536:65536\n' >> /etc/subgid
-
 
 # ----------------------------
 # SSH (key in /etc so it updates on bootc upgrade; experiments port-forward only)
