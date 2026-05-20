@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SIZE="40G"
+SIZE="25G"
 IMAGE="ghcr.io/varuniyer/bootc-setup:latest"
 OUT="$(pwd)/output"
 RAW="$OUT/disk.raw"
