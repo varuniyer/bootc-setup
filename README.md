@@ -12,7 +12,7 @@ bootc-based Fedora image for varuniyer.net. Runs the website, WebDAV, and a Post
 
 - `/usr`: immutable. The container image's root content, swapped atomically by the `bootc-fetch-apply-updates` timer. `/bin`, `/sbin`, `/lib`, `/lib64` are symlinks into `/usr`.
 - `/etc`: transient tmpfs, repopulated from `/usr/etc` each boot. Runtime edits are lost on reboot. Bake persistent config into `/usr/etc` at image build.
-- `/var`: mutable and persistent. Survives auto-updates and reboots. Service state (`/var/lib/webdav`, `/var/lib/pgsql/data`, `/var/log/caddy`, `/var/lib/ssh`) lives here. `/home` and `/root` are symlinks into `/var`.
+- `/var`: mutable and persistent. Survives auto-updates and reboots. Service state (`/var/lib/webdav`, `/var/lib/pgsql/data`, `/var/log/caddy`, `/var/lib/sshd`) lives here. `/home` and `/root` are symlinks into `/var`.
 - `/boot`, `/boot/efi`: managed by `bootupd`, updated as part of the `bootc-fetch-apply-updates` cycle.
 - `/run`, `/tmp`: tmpfs, cleared each boot.
 - `/sysroot`: read-only mount of the underlying ostree storage that backs bootc deployments. Not browsed directly.

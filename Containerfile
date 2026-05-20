@@ -37,15 +37,26 @@ FROM quay.io/fedora/fedora-bootc:latest
 # Static site
 COPY --from=compress /work/public /usr/share/caddy
 
-# Configs
-COPY Caddyfile /etc/caddy/Caddyfile
-COPY webdav.conf /etc/httpd/conf.d/webdav.conf
-COPY postgresql.conf /usr/share/postgres/postgresql.conf
-COPY pg_hba.conf /usr/share/postgres/pg_hba.conf
+# System config files
+COPY prepare-root.conf /usr/lib/ostree/prepare-root.conf
+COPY bootc.json        /etc/bootc/bootc.json
+
+# Caddy + httpd + postgres configs
+COPY Caddyfile           /etc/caddy/Caddyfile
+COPY webdav.conf         /etc/httpd/conf.d/webdav.conf
+COPY postgresql.conf     /usr/share/postgres/postgresql.conf
+COPY pg_hba.conf         /usr/share/postgres/pg_hba.conf
+COPY bootstrap.sql       /usr/share/postgres/bootstrap.sql
+
+# SSH config + authorized keys
+COPY 30-authkeys.conf            /etc/ssh/sshd_config.d/30-authkeys.conf
+COPY 40-experiments.conf         /etc/ssh/sshd_config.d/40-experiments.conf
+COPY authorized_keys.root        /etc/ssh/authorized_keys.d/root
+COPY authorized_keys.experiments /etc/ssh/authorized_keys.d/experiments
 
 # Scripts and units
-COPY setup.sh /usr/libexec/setup.sh
-COPY post-startup.sh /usr/libexec/post-startup.sh
+COPY setup.sh             /usr/libexec/setup.sh
+COPY post-startup.sh      /usr/libexec/post-startup.sh
 COPY post-startup.service /usr/lib/systemd/system/post-startup.service
 
 # Single build-time mutation layer
