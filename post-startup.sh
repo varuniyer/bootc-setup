@@ -1,14 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ssh host keys (read via /etc/ssh symlinks)
-mkdir -p /var/lib/sshd
-key=/var/lib/sshd/ssh_host_ed25519_key
-[ -s "$key" ] || ssh-keygen -q -t ed25519 -f "$key" -C "" -N ""
-chmod 0600 "$key"
-chmod 0644 "$key.pub"
-chcon -t sshd_key_t "$key" "$key.pub"
-
 # webdav state
 mkdir -p /var/lib/webdav/data /var/lib/webdav/lock
 chown -R apache:apache /var/lib/webdav

@@ -38,15 +38,15 @@ FROM quay.io/fedora/fedora-bootc:latest
 COPY --from=compress /work/public /usr/share/caddy
 
 # Standalone config files
-COPY prepare-root.conf /usr/lib/ostree/prepare-root.conf
-COPY bootc.json        /etc/bootc/bootc.json
-COPY Caddyfile         /etc/caddy/Caddyfile
-COPY webdav.conf       /etc/httpd/conf.d/webdav.conf
+COPY prepare-root.conf      /usr/lib/ostree/prepare-root.conf
+COPY bootc.json             /etc/bootc/bootc.json
+COPY Caddyfile              /etc/caddy/Caddyfile
+COPY webdav.conf            /etc/httpd/conf.d/webdav.conf
+COPY stunnel-postgres.conf  /etc/stunnel/postgres.conf
+COPY psk.txt                /etc/stunnel/psk.txt
 
 # Grouped configs
-COPY postgresql/        /usr/share/postgres/
-COPY sshd_config.d/     /etc/ssh/sshd_config.d/
-COPY authorized_keys.d/ /etc/ssh/authorized_keys.d/
+COPY postgresql/ /usr/share/postgres/
 
 # Scripts and units
 COPY setup.sh             /usr/libexec/setup.sh
