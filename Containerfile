@@ -42,11 +42,9 @@ COPY prepare-root.conf      /usr/lib/ostree/prepare-root.conf
 COPY bootc.json             /etc/bootc/bootc.json
 COPY Caddyfile              /etc/caddy/Caddyfile
 COPY webdav.conf            /etc/httpd/conf.d/webdav.conf
-COPY stunnel-postgres.conf  /etc/stunnel/postgres.conf
-COPY psk.txt                /etc/stunnel/psk.txt
-
 # Grouped configs
 COPY postgresql/ /usr/share/postgres/
+COPY stunnel/    /etc/stunnel/
 
 # Scripts and units
 COPY setup.sh             /usr/libexec/setup.sh

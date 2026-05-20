@@ -30,7 +30,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Materialize stunnel PSK
-        run: printf 'varuniyer:%s\n' "${{ secrets.STUNNEL_PSK }}" > psk.txt
+        run: printf 'varuniyer:%s\n' "${{ secrets.STUNNEL_PSK }}" > stunnel/psk.txt
 
       - name: Build image
         run: podman build -f Containerfile -t ghcr.io/varuniyer/bootc-setup:latest .

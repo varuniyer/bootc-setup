@@ -1,10 +1,10 @@
 # bootc-setup
 
-bootc-based Fedora image for varuniyer.net. Runs the website, WebDAV, and a Postgres 17 instance for experiments. All three are plain system services from Fedora packages. No sshd; Postgres is reachable from authorized clients through a single-PSK stunnel tunnel.
+bootc-based Fedora image for varuniyer.net. Runs the website, WebDAV, and a Postgres 17 instance for experiments. All three are plain system services from Fedora packages. Postgres is reachable from authorized clients through a single-PSK stunnel tunnel.
 
 ## How it works
 
-- `Containerfile` builds on `quay.io/fedora/fedora-bootc:latest`. `setup.sh` installs `caddy`, `httpd`, `postgresql17-server`, and `stunnel`, removes `openssh-server`, and enables them as system services.
+- `Containerfile` builds on `quay.io/fedora/fedora-bootc:latest`. `setup.sh` installs `caddy`, `httpd`, `postgresql17-server`, and `stunnel`, then enables them as system services.
 - On every push to `main`, GitHub Actions materializes the stunnel PSK from `secrets.STUNNEL_PSK`, builds the image with `podman`, pushes it to `ghcr.io/varuniyer/bootc-setup:latest` (private package), and rebuilds a GCP disk image as a recovery seed.
 - The running VM updates itself from GHCR via the `bootc-fetch-apply-updates` timer. The GCP image is only for new VMs and disaster recovery.
 
@@ -21,7 +21,7 @@ bootc-based Fedora image for varuniyer.net. Runs the website, WebDAV, and a Post
 
 ## Access
 
-No interactive login. Postgres is exposed via stunnel on `:5433` (TLS 1.3 PSK only). Any client with the PSK runs stunnel locally pointing `127.0.0.1:5432 -> varuniyer.net:5433`, then connects with `psql -h 127.0.0.1 -U experiments experiments`. Recovery, if needed, goes through `gcloud compute ssh --serial-port` or a full disk-image reflash from the GCP recovery seed.
+Postgres is exposed via stunnel on `:5433` (TLS 1.3 PSK only). Any client with the PSK runs stunnel locally pointing `127.0.0.1:5432 -> varuniyer.net:5433`, then connects with `psql -h 127.0.0.1 -U experiments experiments`.
 
 ## Layout
 
