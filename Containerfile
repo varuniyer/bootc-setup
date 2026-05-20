@@ -46,7 +46,7 @@ COPY pg_hba.conf /usr/share/postgres/pg_hba.conf
 # Scripts and units
 COPY setup.sh /usr/libexec/setup.sh
 COPY post-startup.sh /usr/libexec/post-startup.sh
-COPY post-startup.service /etc/systemd/system/post-startup.service
+COPY post-startup.service /usr/lib/systemd/system/post-startup.service
 
 # Single build-time mutation layer
 RUN bash /usr/libexec/setup.sh

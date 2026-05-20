@@ -45,7 +45,7 @@ chcon -t sshd_key_t /var/lib/ssh/ssh_host_*
 EOF
 chmod +x /usr/libexec/sshd-keygen-persist
 
-cat > /etc/systemd/system/sshd-keygen-persist.service <<'EOF'
+cat > /usr/lib/systemd/system/sshd-keygen-persist.service <<'EOF'
 [Unit]
 Description=Generate persistent SSH host keys in /var/lib/ssh
 Before=sshd.service
@@ -108,8 +108,8 @@ systemctl enable caddy.service
 systemctl enable httpd.service
 systemctl enable postgresql.service
 
-mkdir -p /etc/systemd/system/bootc-fetch-apply-updates.service.d
+mkdir -p /usr/lib/systemd/system/bootc-fetch-apply-updates.service.d
 printf '[Service]\nExecStart=\nExecStart=/usr/bin/bootc upgrade --apply\n' \
-    > /etc/systemd/system/bootc-fetch-apply-updates.service.d/override.conf
+    > /usr/lib/systemd/system/bootc-fetch-apply-updates.service.d/override.conf
 
 chmod +x /usr/libexec/post-startup.sh
