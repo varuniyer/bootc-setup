@@ -5,6 +5,7 @@ set -euo pipefail
 mkdir -p /var/lib/webdav/data /var/lib/webdav/lock
 chown -R apache:apache /var/lib/webdav
 chmod 0700 /var/lib/webdav /var/lib/webdav/data /var/lib/webdav/lock
+chcon -Rt httpd_sys_rw_content_t /var/lib/webdav
 if [ ! -e /var/lib/webdav/lock/lockdb ]; then
     touch /var/lib/webdav/lock/lockdb
     chown apache:apache /var/lib/webdav/lock/lockdb
