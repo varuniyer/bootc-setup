@@ -33,10 +33,9 @@ if [ ! -d /var/lib/pgsql/data/base ]; then
     need_bootstrap=1
 fi
 
-cp /usr/share/postgres/postgresql.conf /var/lib/pgsql/data/postgresql.conf
-cp /usr/share/postgres/pg_hba.conf     /var/lib/pgsql/data/pg_hba.conf
-chown postgres:postgres /var/lib/pgsql/data/postgresql.conf /var/lib/pgsql/data/pg_hba.conf
-chmod 0600 /var/lib/pgsql/data/postgresql.conf /var/lib/pgsql/data/pg_hba.conf
+cp /usr/share/postgres/*.conf /var/lib/pgsql/data/
+chown postgres:postgres /var/lib/pgsql/data/*.conf
+chmod 0600 /var/lib/pgsql/data/*.conf
 
 if [ -n "$need_bootstrap" ]; then
     runuser -u postgres -- pg_ctl -D /var/lib/pgsql/data -l /tmp/pg-init.log -w start
