@@ -3,13 +3,11 @@ set -euo pipefail
 
 # ssh host keys (read via /etc/ssh symlinks)
 mkdir -p /var/lib/sshd
-for t in rsa ecdsa ed25519; do
-    key="/var/lib/sshd/ssh_host_${t}_key"
-    [ -s "$key" ] || ssh-keygen -q -t "$t" -f "$key" -C "" -N ""
-done
-chmod 0600 /var/lib/sshd/ssh_host_*_key
-chmod 0644 /var/lib/sshd/ssh_host_*_key.pub
-chcon -t sshd_key_t /var/lib/sshd/ssh_host_*
+key=/var/lib/sshd/ssh_host_ed25519_key
+[ -s "$key" ] || ssh-keygen -q -t ed25519 -f "$key" -C "" -N ""
+chmod 0600 "$key"
+chmod 0644 "$key.pub"
+chcon -t sshd_key_t "$key" "$key.pub"
 
 # webdav state
 mkdir -p /var/lib/webdav/data /var/lib/webdav/lock

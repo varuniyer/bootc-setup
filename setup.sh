@@ -25,10 +25,8 @@ rmdir /var/roothome
 # config paths. sshd-keygen@<type>.service is a no-op once the symlink
 # targets are populated (ConditionFileNotEmpty=|! returns false).
 # ----------------------------
-for t in rsa ecdsa ed25519; do
-    ln -s "/var/lib/sshd/ssh_host_${t}_key"     "/etc/ssh/ssh_host_${t}_key"
-    ln -s "/var/lib/sshd/ssh_host_${t}_key.pub" "/etc/ssh/ssh_host_${t}_key.pub"
-done
+ln -s /var/lib/sshd/ssh_host_ed25519_key     /etc/ssh/ssh_host_ed25519_key
+ln -s /var/lib/sshd/ssh_host_ed25519_key.pub /etc/ssh/ssh_host_ed25519_key.pub
 
 
 # ----------------------------
