@@ -4,7 +4,7 @@ set -euo pipefail
 # ----------------------------
 # Packages
 # ----------------------------
-dnf install -y caddy httpd postgresql-server
+dnf install -y caddy httpd 'postgresql-server >= 18' 'postgresql-server < 19'
 dnf clean all
 
 
