@@ -108,8 +108,4 @@ systemctl enable caddy.service
 systemctl enable httpd.service
 systemctl enable postgresql.service
 
-mkdir -p /usr/lib/systemd/system/bootc-fetch-apply-updates.service.d
-printf '[Service]\nExecStart=\nExecStart=/usr/bin/bootc upgrade --apply\n' \
-    > /usr/lib/systemd/system/bootc-fetch-apply-updates.service.d/override.conf
-
 chmod +x /usr/libexec/post-startup.sh
