@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-fetch_metadata() {
-    curl -sf -H "Metadata-Flavor: Google" \
-        "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$1" || true
+fetch_secret() {
+    local project token
+    project=$(curl -sf -H "Metadata-Flavor: Google" \
+        "http://metadata.google.internal/computeMetadata/v1/project/project-id") || return 1
+    token=$(curl -sf -H "Metadata-Flavor: Google" \
+        "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token" \
+        | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'],end='')") || return 1
+    curl -sf \
+        -H "Authorization: Bearer $token" \
+        "https://secretmanager.googleapis.com/v1/projects/${project}/secrets/$1/versions/latest:access" \
+        | python3 -c "import sys,json,base64; print(base64.b64decode(json.load(sys.stdin)['payload']['data']).decode(),end='')" || return 1
 }
 
 # webdav state
@@ -17,20 +25,20 @@ if [ ! -e /var/lib/webdav/lock/lockdb ]; then
     chmod 0600 /var/lib/webdav/lock/lockdb
 fi
 
-# caddy logs + Caddyfile with hashed password from GCP metadata
+# caddy logs + Caddyfile with hashed password from Secret Manager
 mkdir -p /var/log/caddy
 chown caddy:caddy /var/log/caddy
 chmod 0750 /var/log/caddy
-CADDY_HASH=$(fetch_metadata caddy-hashed-password)
+CADDY_HASH=$(fetch_secret caddy-hashed-password || true)
 if [ -n "$CADDY_HASH" ]; then
     sed "s|CADDY_HASHED_PASSWORD|${CADDY_HASH}|" /usr/etc/caddy/Caddyfile > /etc/caddy/Caddyfile
 fi
 
-# stunnel PSK: fetch from GCP metadata once and persist in /var
+# stunnel PSK: fetch from Secret Manager once and persist in /var
 mkdir -p /var/lib/stunnel
 chmod 0700 /var/lib/stunnel
 if [ ! -f /var/lib/stunnel/psk.txt ]; then
-    PSK=$(fetch_metadata stunnel-psk)
+    PSK=$(fetch_secret stunnel-psk || true)
     if [ -n "$PSK" ]; then
         printf '%s\n' "$PSK" > /var/lib/stunnel/psk.txt
         chown root:root /var/lib/stunnel/psk.txt
