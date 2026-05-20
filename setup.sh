@@ -26,13 +26,6 @@ sed -i '/^Listen /d' /etc/httpd/conf/httpd.conf
 
 
 # ----------------------------
-# stunnel: lock down PSK file perms
-# ----------------------------
-chmod 0600 /etc/stunnel/psk.txt
-chown root:root /etc/stunnel/psk.txt
-
-
-# ----------------------------
 # Services
 # ----------------------------
 systemctl enable post-startup.service \

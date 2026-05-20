@@ -16,6 +16,19 @@ mkdir -p /var/log/caddy
 chown caddy:caddy /var/log/caddy
 chmod 0750 /var/log/caddy
 
+# stunnel PSK: fetch from GCP metadata once and persist in /var
+mkdir -p /var/lib/stunnel
+chmod 0700 /var/lib/stunnel
+if [ ! -f /var/lib/stunnel/psk.txt ]; then
+    PSK=$(curl -sf -H "Metadata-Flavor: Google" \
+        "http://metadata.google.internal/computeMetadata/v1/instance/attributes/stunnel-psk" || true)
+    if [ -n "$PSK" ]; then
+        printf '%s\n' "$PSK" > /var/lib/stunnel/psk.txt
+        chown root:root /var/lib/stunnel/psk.txt
+        chmod 0600 /var/lib/stunnel/psk.txt
+    fi
+fi
+
 # postgres: initdb + bootstrap role/db on first boot, refresh configs every boot
 need_bootstrap=
 if [ ! -d /var/lib/pgsql/data/base ]; then

@@ -39,7 +39,6 @@ COPY --from=compress /work/public /usr/share/caddy
 
 # Standalone config files
 COPY prepare-root.conf      /usr/lib/ostree/prepare-root.conf
-COPY auth.json              /etc/ostree/auth.json
 COPY bootc.json             /etc/bootc/bootc.json
 COPY Caddyfile              /etc/caddy/Caddyfile
 COPY webdav.conf            /etc/httpd/conf.d/webdav.conf
