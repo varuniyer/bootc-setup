@@ -5,6 +5,7 @@ set -euo pipefail
 # Packages
 # ----------------------------
 dnf install -y caddy httpd postgresql17-server stunnel
+dnf remove -y openssh-server
 dnf clean all
 
 
