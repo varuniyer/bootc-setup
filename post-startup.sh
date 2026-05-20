@@ -26,20 +26,10 @@ if [ -n "$CADDY_HASH" ]; then
     sed "s|CADDY_HASHED_PASSWORD|${CADDY_HASH}|" /usr/etc/caddy/Caddyfile > /etc/caddy/Caddyfile
 fi
 
-# stunnel PSK: fetch from instance metadata once and persist in /var;
-# copy to /etc/stunnel/psk.txt each boot so stunnel can read it
-mkdir -p /var/lib/stunnel
-chmod 0700 /var/lib/stunnel
-if [ ! -f /var/lib/stunnel/psk.txt ]; then
-    PSK=$(fetch_metadata stunnel-psk)
-    if [ -n "$PSK" ]; then
-        printf '%s\n' "$PSK" > /var/lib/stunnel/psk.txt
-        chown root:root /var/lib/stunnel/psk.txt
-        chmod 0600 /var/lib/stunnel/psk.txt
-    fi
-fi
-if [ -f /var/lib/stunnel/psk.txt ]; then
-    cp /var/lib/stunnel/psk.txt /etc/stunnel/psk.txt
+# stunnel PSK: fetch from instance metadata each boot and write to /etc/stunnel/
+PSK=$(fetch_metadata stunnel-psk)
+if [ -n "$PSK" ]; then
+    printf '%s\n' "$PSK" > /etc/stunnel/psk.txt
     chmod 0600 /etc/stunnel/psk.txt
 fi
 
