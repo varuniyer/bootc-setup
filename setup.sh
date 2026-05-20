@@ -4,7 +4,7 @@ set -euo pipefail
 # ----------------------------
 # Packages
 # ----------------------------
-dnf install -y caddy httpd postgresql18
+dnf install -y caddy httpd postgresql-server
 dnf clean all
 
 
