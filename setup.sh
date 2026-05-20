@@ -94,9 +94,9 @@ printf 'Match User experiments\n    AllowTcpForwarding yes\n    PermitOpen 127.0
 
 
 # ----------------------------
-# httpd: bind to 127.0.0.1:8080 instead of the default :80
+# httpd: drop the default Listen 80 so webdav.conf can own the bind
 # ----------------------------
-sed -i 's/^Listen .*/Listen 127.0.0.1:8080/' /etc/httpd/conf/httpd.conf
+sed -i '/^Listen /d' /etc/httpd/conf/httpd.conf
 
 
 # ----------------------------
