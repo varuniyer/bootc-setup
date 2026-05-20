@@ -26,7 +26,8 @@ if [ -n "$CADDY_HASH" ]; then
     sed "s|CADDY_HASHED_PASSWORD|${CADDY_HASH}|" /usr/etc/caddy/Caddyfile > /etc/caddy/Caddyfile
 fi
 
-# stunnel PSK: fetch from instance metadata once and persist in /var
+# stunnel PSK: fetch from instance metadata once and persist in /var;
+# copy to /etc/stunnel/psk.txt each boot so stunnel can read it
 mkdir -p /var/lib/stunnel
 chmod 0700 /var/lib/stunnel
 if [ ! -f /var/lib/stunnel/psk.txt ]; then
@@ -36,6 +37,10 @@ if [ ! -f /var/lib/stunnel/psk.txt ]; then
         chown root:root /var/lib/stunnel/psk.txt
         chmod 0600 /var/lib/stunnel/psk.txt
     fi
+fi
+if [ -f /var/lib/stunnel/psk.txt ]; then
+    cp /var/lib/stunnel/psk.txt /etc/stunnel/psk.txt
+    chmod 0600 /etc/stunnel/psk.txt
 fi
 
 # postgres: initdb + bootstrap role/db on first boot, refresh configs every boot
