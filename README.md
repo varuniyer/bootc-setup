@@ -29,7 +29,7 @@ Postgres is exposed via stunnel on `:5433` (TLS 1.3 PSK only). Any client with t
 - `setup.sh`: all build-time mutations (packages, sed, service enables).
 - `post-startup.{sh,service}`: boot-time, idempotent. Creates `/var` state dirs with correct ownership, runs `postgresql-setup --initdb` and bootstraps the `experiments` role+db on first boot, refreshes Postgres configs each boot.
 - `Caddyfile`, `webdav.conf`, `prepare-root.conf`, `bootc.json`, `stunnel/postgres.conf`: standalone configs, each COPY'd to their target paths.
-- `provision.sh`: generates a stunnel PSK and prompts for a WebDAV password, writes the PSK to `~/.config/stunnel/postgres.psk`, then creates the GCP instance with both secrets in instance metadata. `post-startup.sh` fetches them on first boot: PSK is persisted to `/var/lib/stunnel/psk.txt`; caddy hash is substituted into the Caddyfile template each boot.
+- `provision.sh`: generates a stunnel PSK and prompts for a WebDAV password, writes the PSK to `~/.config/stunnel/postgres.psk`, then creates the GCP instance with both secrets in instance metadata. `post-startup.sh` fetches them each boot: PSK is written to `/etc/stunnel/psk.txt`; caddy hash is substituted into the Caddyfile template.
 - `postgresql/`: `postgresql.conf`, `pg_hba.conf` (copied into `/var/lib/pgsql/data/` each boot by `post-startup.sh`), and `bootstrap.sql` (run once on first-boot init to create the `experiments` role+db and lock down PUBLIC connect).
 - `website/`: static site sources (Hugo).
 - `build-disk.sh` and `.github/workflows/build.yml`: CI for GHCR push and GCP image build.
