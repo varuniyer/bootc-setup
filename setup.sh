@@ -106,7 +106,7 @@ systemctl enable post-startup.service
 systemctl enable bootc-fetch-apply-updates.timer
 systemctl enable caddy.service
 systemctl enable httpd.service
-systemctl enable postgresql-18.service
+systemctl enable postgresql.service
 
 mkdir -p /etc/systemd/system/bootc-fetch-apply-updates.service.d
 printf '[Service]\nExecStart=\nExecStart=/usr/bin/bootc upgrade --apply\n' \

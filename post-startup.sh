@@ -10,21 +10,21 @@ install -d -o caddy -g caddy -m 0750 /var/log/caddy
 
 # postgres: initdb + bootstrap role/db on first boot, refresh configs every boot
 need_bootstrap=
-if [ ! -d /var/lib/pgsql/18/data/base ]; then
-    /usr/pgsql-18/bin/postgresql-18-setup initdb
+if [ ! -d /var/lib/pgsql/data/base ]; then
+    postgresql-setup --initdb
     need_bootstrap=1
 fi
 
-install -o postgres -g postgres -m 0600 /usr/share/postgres/postgresql.conf /var/lib/pgsql/18/data/postgresql.conf
-install -o postgres -g postgres -m 0600 /usr/share/postgres/pg_hba.conf      /var/lib/pgsql/18/data/pg_hba.conf
+install -o postgres -g postgres -m 0600 /usr/share/postgres/postgresql.conf /var/lib/pgsql/data/postgresql.conf
+install -o postgres -g postgres -m 0600 /usr/share/postgres/pg_hba.conf      /var/lib/pgsql/data/pg_hba.conf
 
 if [ -n "$need_bootstrap" ]; then
-    runuser -u postgres -- /usr/pgsql-18/bin/pg_ctl -D /var/lib/pgsql/18/data -l /tmp/pg-init.log -w start
-    runuser -u postgres -- /usr/pgsql-18/bin/psql -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+    runuser -u postgres -- pg_ctl -D /var/lib/pgsql/data -l /tmp/pg-init.log -w start
+    runuser -u postgres -- psql -d postgres -v ON_ERROR_STOP=1 <<'SQL'
 CREATE ROLE experiments LOGIN;
 CREATE DATABASE experiments OWNER experiments;
 REVOKE CONNECT ON DATABASE postgres FROM PUBLIC;
 REVOKE CONNECT ON DATABASE template1 FROM PUBLIC;
 SQL
-    runuser -u postgres -- /usr/pgsql-18/bin/pg_ctl -D /var/lib/pgsql/18/data -w stop
+    runuser -u postgres -- pg_ctl -D /var/lib/pgsql/data -w stop
 fi

@@ -1,7 +1,7 @@
 [Unit]
 Description=Provision /var state before services start
 After=local-fs.target
-Before=httpd.service postgresql-18.service caddy.service
+Before=httpd.service postgresql.service caddy.service
 
 [Service]
 Type=oneshot
