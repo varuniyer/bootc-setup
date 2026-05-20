@@ -36,7 +36,6 @@ done
 # ----------------------------
 install -d /usr/share/experiments
 useradd -M -d /usr/share/experiments -s /usr/sbin/nologin experiments
-echo '/usr/sbin/nologin' >> /etc/shells
 
 
 # ----------------------------
