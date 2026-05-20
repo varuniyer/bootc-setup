@@ -29,7 +29,7 @@ Postgres is exposed via stunnel on `:5433` (TLS 1.3 PSK only). Any client with t
 - `setup.sh`: all build-time mutations (packages, sed, service enables).
 - `post-startup.{sh,service}`: boot-time, idempotent. Creates `/var` state dirs with correct ownership, runs `postgresql-setup --initdb` and bootstraps the `experiments` role+db on first boot, refreshes Postgres configs each boot.
 - `Caddyfile`, `webdav.conf`, `prepare-root.conf`, `bootc.json`, `stunnel/postgres.conf`: standalone configs, each COPY'd to their target paths.
-- `upload-psk.sh`: one-time script that stores the stunnel PSK in GCP instance metadata. On next boot, `post-startup.sh` fetches it once and writes `/var/lib/stunnel/psk.txt` (persistent across reboots and updates).
+- `create-and-upload-psk.sh`: generates a stunnel PSK, writes it to `~/.config/stunnel/varuniyer.psk`, and stores it in GCP instance metadata. On next boot, `post-startup.sh` fetches it once and writes `/var/lib/stunnel/psk.txt` (persistent across reboots and updates).
 - `postgresql/`: `postgresql.conf`, `pg_hba.conf` (copied into `/var/lib/pgsql/data/` each boot by `post-startup.sh`), and `bootstrap.sql` (run once on first-boot init to create the `experiments` role+db and lock down PUBLIC connect).
 - `website/`: static site sources (Hugo).
 - `build-disk.sh` and `.github/workflows/build.yml`: CI for GHCR push and GCP image build.
