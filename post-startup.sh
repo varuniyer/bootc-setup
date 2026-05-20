@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ssh host keys (read via /etc/ssh symlinks)
-install -d -m 0755 /var/lib/sshd
+mkdir -p /var/lib/sshd
 for t in rsa ecdsa ed25519; do
     key="/var/lib/sshd/ssh_host_${t}_key"
     [ -s "$key" ] || ssh-keygen -q -t "$t" -f "$key" -C "" -N ""
@@ -12,11 +12,19 @@ chmod 0644 /var/lib/sshd/ssh_host_*_key.pub
 chcon -t sshd_key_t /var/lib/sshd/ssh_host_*
 
 # webdav state
-install -d -o apache -g apache -m 0700 /var/lib/webdav /var/lib/webdav/data /var/lib/webdav/lock
-[ -e /var/lib/webdav/lock/lockdb ] || install -o apache -g apache -m 0600 /dev/null /var/lib/webdav/lock/lockdb
+mkdir -p /var/lib/webdav/data /var/lib/webdav/lock
+chown -R apache:apache /var/lib/webdav
+chmod 0700 /var/lib/webdav /var/lib/webdav/data /var/lib/webdav/lock
+if [ ! -e /var/lib/webdav/lock/lockdb ]; then
+    touch /var/lib/webdav/lock/lockdb
+    chown apache:apache /var/lib/webdav/lock/lockdb
+    chmod 0600 /var/lib/webdav/lock/lockdb
+fi
 
 # caddy logs
-install -d -o caddy -g caddy -m 0750 /var/log/caddy
+mkdir -p /var/log/caddy
+chown caddy:caddy /var/log/caddy
+chmod 0750 /var/log/caddy
 
 # postgres: initdb + bootstrap role/db on first boot, refresh configs every boot
 need_bootstrap=
@@ -25,8 +33,10 @@ if [ ! -d /var/lib/pgsql/data/base ]; then
     need_bootstrap=1
 fi
 
-install -o postgres -g postgres -m 0600 /usr/share/postgres/postgresql.conf /var/lib/pgsql/data/postgresql.conf
-install -o postgres -g postgres -m 0600 /usr/share/postgres/pg_hba.conf      /var/lib/pgsql/data/pg_hba.conf
+cp /usr/share/postgres/postgresql.conf /var/lib/pgsql/data/postgresql.conf
+cp /usr/share/postgres/pg_hba.conf     /var/lib/pgsql/data/pg_hba.conf
+chown postgres:postgres /var/lib/pgsql/data/postgresql.conf /var/lib/pgsql/data/pg_hba.conf
+chmod 0600 /var/lib/pgsql/data/postgresql.conf /var/lib/pgsql/data/pg_hba.conf
 
 if [ -n "$need_bootstrap" ]; then
     runuser -u postgres -- pg_ctl -D /var/lib/pgsql/data -l /tmp/pg-init.log -w start

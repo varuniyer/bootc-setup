@@ -29,8 +29,9 @@ bootc-based Fedora image for varuniyer.net. Runs the website, WebDAV, and a Post
 - `Containerfile`: image definition; final stage runs `setup.sh` once.
 - `setup.sh`: all build-time mutations (packages, users, ssh, service enables).
 - `post-startup.{sh,service}`: boot-time, idempotent. Creates `/var` state dirs with correct ownership, runs `postgresql-setup --initdb` and bootstraps the `experiments` role+db on first boot, refreshes Postgres configs each boot.
-- `Caddyfile`: Caddy (website + reverse proxy to WebDAV) config.
-- `webdav.conf`: Apache drop-in at `/etc/httpd/conf.d/webdav.conf`. Binds `127.0.0.1:8080`, serves `/var/lib/webdav/data` over `mod_dav`.
-- `postgresql.conf`, `pg_hba.conf`: templates installed into `/var/lib/pgsql/data/` by `post-startup.sh` each boot. `pg_hba.conf` restricts TCP to `experiments` role into the `experiments` db only.
+- `Caddyfile`, `webdav.conf`, `prepare-root.conf`, `bootc.json`: standalone configs, each COPY'd to its target path.
+- `postgresql/`: `postgresql.conf`, `pg_hba.conf` (copied into `/var/lib/pgsql/data/` each boot by `post-startup.sh`), and `bootstrap.sql` (run once on first-boot init to create the `experiments` role+db and lock down PUBLIC connect).
+- `sshd_config.d/`: numbered sshd drop-ins (`30-authkeys.conf` for `AuthorizedKeysFile` + `PermitRootLogin`, `40-experiments.conf` for the port-forward Match block).
+- `authorized_keys.d/`: per-user ssh authorized keys, one file per username.
 - `website/`: static site sources (Hugo).
 - `build-disk.sh` and `.github/workflows/build.yml`: CI for GHCR push and GCP image build.

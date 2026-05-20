@@ -34,7 +34,7 @@ done
 # ----------------------------
 # Users: experiments is ssh-forward-only into postgres
 # ----------------------------
-install -d /usr/share/experiments
+mkdir -p /usr/share/experiments
 useradd -M -d /usr/share/experiments -s /usr/sbin/nologin experiments
 
 
