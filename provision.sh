@@ -20,7 +20,7 @@ INSTANCE_ID=$(gcloud compute instances create bootc \
     --format="value(id)")
 
 PSK=$(openssl rand -hex 32)
-PSK_FILE="$HOME/.config/stunnel/varuniyer.psk"
+PSK_FILE="$HOME/.config/stunnel/postgres.psk"
 mkdir -p "$(dirname "$PSK_FILE")"
 printf 'varuniyer:%s\n' "$PSK" > "$PSK_FILE"
 chmod 0600 "$PSK_FILE"
