@@ -71,9 +71,9 @@ echo '{ "image": "ghcr.io/varuniyer/bootc-setup:latest" }' > /etc/bootc/bootc.js
 # Users (nologin for quadlet users; admin gets shell + passwordless wheel)
 # ----------------------------
 mkdir -p /var/spool/mail
-useradd -m -d /var/home/httpd       -s /usr/sbin/nologin     httpd
-useradd -m -d /var/home/experiments -s /usr/sbin/nologin     experiments
-useradd -m -d /var/home/admin       -s /bin/bash -G wheel    admin
+useradd -u 1000 -m -d /var/home/httpd       -s /usr/sbin/nologin     httpd
+useradd -u 1001 -m -d /var/home/experiments -s /usr/sbin/nologin     experiments
+useradd -u 1002 -m -d /var/home/admin       -s /bin/bash -G wheel    admin
 echo '/usr/sbin/nologin' >> /etc/shells
 
 echo '%wheel ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/wheel-nopasswd

@@ -44,8 +44,8 @@ COPY postgresql.conf /usr/share/postgres/postgresql.conf
 COPY pg_hba.conf /usr/share/postgres/pg_hba.conf
 
 # Quadlets
-COPY webdav.container /etc/containers/systemd/users/httpd/webdav.container
-COPY postgres.container /etc/containers/systemd/users/experiments/postgres.container
+COPY webdav.container /etc/containers/systemd/users/1000/webdav.container
+COPY postgres.container /etc/containers/systemd/users/1001/postgres.container
 
 # Scripts and unit
 COPY setup.sh /usr/libexec/setup.sh
