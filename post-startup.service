@@ -1,0 +1,12 @@
+[Unit]
+Description=Provision /var state before services start
+After=local-fs.target
+Before=httpd.service postgresql-18.service caddy.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/post-startup.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

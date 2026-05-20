@@ -4,18 +4,16 @@ set -euo pipefail
 # ----------------------------
 # Packages
 # ----------------------------
-dnf install -y caddy
+dnf install -y caddy httpd postgresql18
 dnf clean all
 
 
 # ----------------------------
 # System files
 # ----------------------------
-# Make /etc transient (tmpfs from /usr/etc each boot). Append [etc]
-# section, then rebuild the initramfs so ostree-prepare-root reads it
-# at early boot. /root is a symlink to /var/roothome but /var/roothome
-# is created by tmpfiles.d at first boot; materialize it for
-# dracut-install, then remove it so the image's /var stays empty.
+# Make /etc transient (tmpfs from /usr/etc each boot). /root is a
+# symlink to /var/roothome; materialize it for dracut-install, then
+# remove so the image's /var stays empty.
 printf '\n[etc]\ntransient = true\n' >> /usr/lib/ostree/prepare-root.conf
 KVER=$(basename /usr/lib/modules/*)
 mkdir -p /var/roothome
@@ -68,73 +66,50 @@ echo '{ "image": "ghcr.io/varuniyer/bootc-setup:latest" }' > /etc/bootc/bootc.js
 
 
 # ----------------------------
-# Users (nologin for quadlet users; admin gets shell + passwordless wheel)
+# Users: experiments is ssh-forward-only into postgres
 # ----------------------------
-mkdir -p /var/spool/mail
-useradd -u 1000 -m -d /var/home/httpd       -s /usr/sbin/nologin     httpd
-useradd -u 1001 -m -d /var/home/experiments -s /usr/sbin/nologin     experiments
-useradd -u 1002 -m -d /var/home/admin       -s /bin/bash -G wheel    admin
+install -d /usr/share/experiments
+useradd -M -d /usr/share/experiments -s /usr/sbin/nologin experiments
 echo '/usr/sbin/nologin' >> /etc/shells
 
-echo '%wheel ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/wheel-nopasswd
-chmod 0440 /etc/sudoers.d/wheel-nopasswd
-
 
 # ----------------------------
-# SSH (key in /etc so it updates on bootc upgrade; experiments port-forward only)
+# SSH: root for shell, experiments for 5432 forward only
 # ----------------------------
-mkdir -p /etc/ssh/authorized_keys.d /etc/ssh/sshd_config.d
+mkdir -p /etc/ssh/authorized_keys.d
+
+cat > /etc/ssh/authorized_keys.d/root <<'EOF'
+sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIAqvqfe/Qi/zXl2StxCA4piiBC2uuVAuAOC6u+TfMafsAAAACXNzaDp2dWx0cg==
+sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIJ1OrjNP1ysix4konD3sk7Gd+hdt+I+5sUc0SJNRQksjAAAACXNzaDp2dWx0cg==
+EOF
 
 cat > /etc/ssh/authorized_keys.d/experiments <<'EOF'
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPuAduuMXxrNmk6xw9/0TNQ9K+Z0R9ODjGeyw+5+AcJB
 EOF
 
-cat > /etc/ssh/authorized_keys.d/admin <<'EOF'
-sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIAqvqfe/Qi/zXl2StxCA4piiBC2uuVAuAOC6u+TfMafsAAAACXNzaDp2dWx0cg==
-sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIJ1OrjNP1ysix4konD3sk7Gd+hdt+I+5sUc0SJNRQksjAAAACXNzaDp2dWx0cg==
-EOF
-
-printf 'AuthorizedKeysFile /etc/ssh/authorized_keys.d/%%u\n' \
+printf 'AuthorizedKeysFile /etc/ssh/authorized_keys.d/%%u\nPermitRootLogin prohibit-password\n' \
     > /etc/ssh/sshd_config.d/30-authkeys.conf
 printf 'Match User experiments\n    AllowTcpForwarding yes\n    PermitOpen 127.0.0.1:5432\n' \
     > /etc/ssh/sshd_config.d/40-experiments.conf
 
 
 # ----------------------------
-# Lingering for quadlet users
+# httpd: bind to 127.0.0.1:8080 instead of the default :80
 # ----------------------------
-mkdir -p /var/lib/systemd/linger
-touch /var/lib/systemd/linger/httpd /var/lib/systemd/linger/experiments
-
-
-# ----------------------------
-# State directories (baked into /usr/share/factory/var)
-# ----------------------------
-mkdir -p /var/lib/webdav/data /var/lib/webdav/lock \
-         /var/lib/postgres/experiments \
-         /var/log/caddy
-
-chown -R httpd:httpd /var/lib/webdav
-chmod 0700 /var/lib/webdav /var/lib/webdav/data /var/lib/webdav/lock
-touch /var/lib/webdav/lock/lockdb
-chown httpd:httpd /var/lib/webdav/lock/lockdb
-chmod 0600 /var/lib/webdav/lock/lockdb
-
-chown -R experiments:experiments /var/lib/postgres
-chmod 0700 /var/lib/postgres /var/lib/postgres/experiments
-
-chown -R caddy:caddy /var/log/caddy
-chmod 0750 /var/log/caddy
+sed -i 's/^Listen .*/Listen 127.0.0.1:8080/' /etc/httpd/conf/httpd.conf
 
 
 # ----------------------------
-# Services and timers
+# Services
 # ----------------------------
-chmod +x /usr/libexec/user-services.sh
-systemctl enable user-services.service
+systemctl enable post-startup.service
 systemctl enable bootc-fetch-apply-updates.timer
 systemctl enable caddy.service
+systemctl enable httpd.service
+systemctl enable postgresql-18.service
 
 mkdir -p /etc/systemd/system/bootc-fetch-apply-updates.service.d
 printf '[Service]\nExecStart=\nExecStart=/usr/bin/bootc upgrade --apply\n' \
     > /etc/systemd/system/bootc-fetch-apply-updates.service.d/override.conf
+
+chmod +x /usr/libexec/post-startup.sh

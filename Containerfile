@@ -39,18 +39,14 @@ COPY --from=compress /work/public /usr/share/caddy
 
 # Configs
 COPY Caddyfile /etc/caddy/Caddyfile
-COPY httpd.conf /usr/share/webdav/httpd.conf
+COPY webdav.conf /etc/httpd/conf.d/webdav.conf
 COPY postgresql.conf /usr/share/postgres/postgresql.conf
 COPY pg_hba.conf /usr/share/postgres/pg_hba.conf
 
-# Quadlets
-COPY webdav.container /etc/containers/systemd/users/1000/webdav.container
-COPY postgres.container /etc/containers/systemd/users/1001/postgres.container
-
-# Scripts and unit
+# Scripts and units
 COPY setup.sh /usr/libexec/setup.sh
-COPY user-services.sh /usr/libexec/user-services.sh
-COPY user-services.service /etc/systemd/system/user-services.service
+COPY post-startup.sh /usr/libexec/post-startup.sh
+COPY post-startup.service /etc/systemd/system/post-startup.service
 
 # Single build-time mutation layer
 RUN bash /usr/libexec/setup.sh
