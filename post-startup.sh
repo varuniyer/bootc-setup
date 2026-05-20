@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+fetch_metadata() {
+    curl -sf -H "Metadata-Flavor: Google" \
+        "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$1" || true
+}
+
 # webdav state
 mkdir -p /var/lib/webdav/data /var/lib/webdav/lock
 chown -R apache:apache /var/lib/webdav
@@ -12,17 +17,20 @@ if [ ! -e /var/lib/webdav/lock/lockdb ]; then
     chmod 0600 /var/lib/webdav/lock/lockdb
 fi
 
-# caddy logs
+# caddy logs + Caddyfile with hashed password from GCP metadata
 mkdir -p /var/log/caddy
 chown caddy:caddy /var/log/caddy
 chmod 0750 /var/log/caddy
+CADDY_HASH=$(fetch_metadata caddy-hashed-password)
+if [ -n "$CADDY_HASH" ]; then
+    sed "s|CADDY_HASHED_PASSWORD|${CADDY_HASH}|" /usr/etc/caddy/Caddyfile > /etc/caddy/Caddyfile
+fi
 
 # stunnel PSK: fetch from GCP metadata once and persist in /var
 mkdir -p /var/lib/stunnel
 chmod 0700 /var/lib/stunnel
 if [ ! -f /var/lib/stunnel/psk.txt ]; then
-    PSK=$(curl -sf -H "Metadata-Flavor: Google" \
-        "http://metadata.google.internal/computeMetadata/v1/instance/attributes/stunnel-psk" || true)
+    PSK=$(fetch_metadata stunnel-psk)
     if [ -n "$PSK" ]; then
         printf '%s\n' "$PSK" > /var/lib/stunnel/psk.txt
         chown root:root /var/lib/stunnel/psk.txt
@@ -42,7 +50,9 @@ chown postgres:postgres /var/lib/pgsql/data/*.conf
 chmod 0600 /var/lib/pgsql/data/*.conf
 
 if [ -n "$need_bootstrap" ]; then
-    runuser -u postgres -- pg_ctl -D /var/lib/pgsql/data -l /tmp/pg-init.log -w start
-    runuser -u postgres -- psql -d postgres -v ON_ERROR_STOP=1 -f /usr/share/postgres/bootstrap.sql
-    runuser -u postgres -- pg_ctl -D /var/lib/pgsql/data -w stop
+    runuser -u postgres -- bash -c '
+        pg_ctl -D /var/lib/pgsql/data -l /tmp/pg-init.log -w start &&
+        psql -d postgres -v ON_ERROR_STOP=1 -f /usr/share/postgres/bootstrap.sql &&
+        pg_ctl -D /var/lib/pgsql/data -w stop
+    '
 fi

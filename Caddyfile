@@ -42,7 +42,7 @@ varuniyer.info, varuniyer.me, www.varuniyer.net, www.varuniyer.info, www.varuniy
 dav.varuniyer.net {
 	import security_headers
 	basic_auth {
-		davuser "$2a$14$dnEprp8qLkriRtByKw3oxOC5riWA2Eaxf18scp6PdjGqaRgiwcVfi"
+		davuser CADDY_HASHED_PASSWORD
 	}
 	reverse_proxy 127.0.0.1:8080
 }
