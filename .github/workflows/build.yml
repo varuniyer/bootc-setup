@@ -32,6 +32,11 @@ jobs:
       - name: Materialize stunnel PSK
         run: printf 'varuniyer:%s\n' "${{ secrets.STUNNEL_PSK }}" > stunnel/psk.txt
 
+      - name: Materialize ghcr.io pull auth
+        run: |
+          AUTH=$(printf 'varuniyer:%s' "${{ secrets.GHCR_PULL_TOKEN }}" | base64 -w0)
+          printf '{"auths":{"ghcr.io":{"auth":"%s"}}}\n' "$AUTH" > auth.json
+
       - name: Build image
         run: podman build -f Containerfile -t ghcr.io/varuniyer/bootc-setup:latest .
 
