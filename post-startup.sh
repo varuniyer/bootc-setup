@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+fetch_metadata() {
+    curl -sf -H "Metadata-Flavor: Google" \
+        "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$1" || true
+}
+
 # webdav state
 mkdir -p /var/lib/webdav/data /var/lib/webdav/lock
 chown -R apache:apache /var/lib/webdav
@@ -12,21 +17,25 @@ if [ ! -e /var/lib/webdav/lock/lockdb ]; then
     chmod 0600 /var/lib/webdav/lock/lockdb
 fi
 
-# caddy logs + Caddyfile with hashed password from /var
+# caddy logs + Caddyfile with hashed password from instance metadata
 mkdir -p /var/log/caddy
 chown caddy:caddy /var/log/caddy
 chmod 0750 /var/log/caddy
-if [ -f /var/lib/caddy/hashed-password ]; then
-    CADDY_HASH=$(cat /var/lib/caddy/hashed-password)
+CADDY_HASH=$(fetch_metadata caddy-hashed-password)
+if [ -n "$CADDY_HASH" ]; then
     sed "s|CADDY_HASHED_PASSWORD|${CADDY_HASH}|" /usr/etc/caddy/Caddyfile > /etc/caddy/Caddyfile
 fi
 
-# stunnel PSK permissions
+# stunnel PSK: fetch from instance metadata once and persist in /var
 mkdir -p /var/lib/stunnel
 chmod 0700 /var/lib/stunnel
-if [ -f /var/lib/stunnel/psk.txt ]; then
-    chown root:root /var/lib/stunnel/psk.txt
-    chmod 0600 /var/lib/stunnel/psk.txt
+if [ ! -f /var/lib/stunnel/psk.txt ]; then
+    PSK=$(fetch_metadata stunnel-psk)
+    if [ -n "$PSK" ]; then
+        printf '%s\n' "$PSK" > /var/lib/stunnel/psk.txt
+        chown root:root /var/lib/stunnel/psk.txt
+        chmod 0600 /var/lib/stunnel/psk.txt
+    fi
 fi
 
 # postgres: initdb + bootstrap role/db on first boot, refresh configs every boot
