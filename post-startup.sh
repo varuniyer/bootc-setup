@@ -6,16 +6,10 @@ fetch_metadata() {
         "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$1" || true
 }
 
-# webdav state
-mkdir -p /var/lib/webdav/data /var/lib/webdav/lock
-chown -R apache:apache /var/lib/webdav
-chmod 0700 /var/lib/webdav /var/lib/webdav/data /var/lib/webdav/lock
-chcon -Rt httpd_sys_rw_content_t /var/lib/webdav
-if [ ! -e /var/lib/webdav/lock/lockdb ]; then
-    touch /var/lib/webdav/lock/lockdb
-    chown apache:apache /var/lib/webdav/lock/lockdb
-    chmod 0600 /var/lib/webdav/lock/lockdb
-fi
+# webdav state (owned by caddy)
+mkdir -p /var/lib/webdav/data
+chown -R caddy:caddy /var/lib/webdav
+chmod 0700 /var/lib/webdav /var/lib/webdav/data
 
 # caddy logs + Caddyfile with hashed password from instance metadata
 mkdir -p /var/log/caddy
@@ -26,14 +20,7 @@ if [ -n "$CADDY_HASH" ]; then
     sed "s|CADDY_HASHED_PASSWORD|${CADDY_HASH}|" /usr/etc/caddy/Caddyfile > /etc/caddy/Caddyfile
 fi
 
-# stunnel PSK: fetch from instance metadata each boot and write to /etc/stunnel/
-PSK=$(fetch_metadata stunnel-psk)
-if [ -n "$PSK" ]; then
-    printf '%s\n' "$PSK" > /etc/stunnel/psk.txt
-    chmod 0600 /etc/stunnel/psk.txt
-fi
-
-# postgres: initdb + bootstrap role/db on first boot, refresh configs every boot
+# postgres: initdb on first boot, refresh configs every boot, delegate first-boot SQL to bootstrap.sh
 need_bootstrap=
 if [ ! -d /var/lib/pgsql/data/base ]; then
     postgresql-setup --initdb
@@ -45,9 +32,5 @@ chown postgres:postgres /var/lib/pgsql/data/*.conf
 chmod 0600 /var/lib/pgsql/data/*.conf
 
 if [ -n "$need_bootstrap" ]; then
-    runuser -u postgres -- bash -c '
-        pg_ctl -D /var/lib/pgsql/data -l /tmp/pg-init.log -w start &&
-        psql -d postgres -v ON_ERROR_STOP=1 -f /usr/share/postgres/bootstrap.sql &&
-        pg_ctl -D /var/lib/pgsql/data -w stop
-    '
+    /usr/libexec/bootstrap.sh
 fi

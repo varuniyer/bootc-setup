@@ -30,25 +30,33 @@ RUN find public -type f \( \
 
 
 # --------------------------------------
-# Stage 3: Final bootc image
+# Stage 3: Caddy with layer4 + webdav plugins
+# --------------------------------------
+FROM docker.io/library/caddy:builder AS caddy-build
+RUN xcaddy build --with github.com/mholt/caddy-l4 --with github.com/mholt/caddy-webdav
+
+
+# --------------------------------------
+# Stage 4: Final bootc image
 # --------------------------------------
 FROM quay.io/fedora/fedora-bootc:latest
 
 # Static site
-COPY --from=compress /work/public /usr/share/caddy
+COPY --from=compress    /work/public      /usr/share/caddy
+# Custom caddy binary (moved into place by setup.sh)
+COPY --from=caddy-build /usr/bin/caddy    /tmp/caddy.custom
 
 # Standalone config files
 COPY prepare-root.conf      /usr/lib/ostree/prepare-root.conf
 COPY bootc.json             /etc/bootc/bootc.json
 COPY Caddyfile              /etc/caddy/Caddyfile
-COPY webdav.conf            /etc/httpd/conf.d/webdav.conf
 # Grouped configs
 COPY postgresql/ /usr/share/postgres/
-COPY stunnel/    /etc/stunnel/
 
 # Scripts and units
 COPY setup.sh             /usr/libexec/setup.sh
 COPY post-startup.sh      /usr/libexec/post-startup.sh
+COPY bootstrap.sh         /usr/libexec/bootstrap.sh
 COPY post-startup.service /usr/lib/systemd/system/post-startup.service
 
 # Single build-time mutation layer

@@ -2,21 +2,21 @@
 set -euo pipefail
 
 # Generates auth secrets and creates the GCP instance with them in metadata
-# at creation time. post-startup.sh fetches them on first boot.
+# at creation time. post-startup.sh and bootstrap.sh fetch them on first boot.
 #
 # Usage: ./provision.sh
 
 ZONE=us-central1-a
 
-PSK=$(openssl rand -hex 32)
-PSK_FILE="$HOME/.config/stunnel/postgres.psk"
-mkdir -p "$(dirname "$PSK_FILE")"
-printf 'postgres:%s\n' "$PSK" > "$PSK_FILE"
-chmod 0600 "$PSK_FILE"
+# Postgres password as SCRAM-SHA-256 verifier, hashed inside an ephemeral postgres:17-alpine container.
+read -rsp 'Postgres password: ' PG_PASSWORD
+printf '\n'
+PG_HASH=$(podman run --rm -i --user postgres -e PW="$PG_PASSWORD" \
+    docker.io/library/postgres:17-alpine /bin/sh < hash-pg-password.sh)
 
 read -rsp 'WebDAV password: ' CADDY_PASSWORD
 printf '\n'
-CADDY_HASH=$(caddy hash-password --plaintext "$CADDY_PASSWORD")
+CADDY_HASH=$(caddy hash-password --algorithm argon2id --plaintext "$CADDY_PASSWORD")
 
 gcloud compute instances create bootc \
     --zone="$ZONE" \
@@ -27,4 +27,4 @@ gcloud compute instances create bootc \
     --address=bootc-ip \
     --shielded-vtpm \
     --shielded-integrity-monitoring \
-    --metadata "stunnel-psk=postgres:${PSK},caddy-hashed-password=${CADDY_HASH}"
+    --metadata "postgres-experiments-scram=${PG_HASH},caddy-hashed-password=${CADDY_HASH}"

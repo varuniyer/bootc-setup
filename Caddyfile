@@ -9,6 +9,18 @@
 		}
 		format json
 	}
+
+	servers {
+		listener_wrappers {
+			layer4 {
+				@postgres tls sni db.varuniyer.net
+				route @postgres {
+					proxy tcp/127.0.0.1:5432
+				}
+			}
+			tls
+		}
+	}
 }
 
 (security_headers) {
@@ -44,7 +56,9 @@ dav.varuniyer.net {
 	basic_auth {
 		davuser CADDY_HASHED_PASSWORD
 	}
-	reverse_proxy 127.0.0.1:8080
+	webdav {
+		root /var/lib/webdav/data
+	}
 }
 
 mta-sts.varuniyer.net {

@@ -1,10 +1,10 @@
 # bootc-setup
 
-bootc-based Fedora image for varuniyer.net. Runs the website, WebDAV, and a Postgres 17 instance for experiments. All three are plain system services from Fedora packages. Postgres is reachable from authorized clients through a single-PSK stunnel tunnel.
+bootc-based Fedora image for varuniyer.net. Runs the website, WebDAV, and a Postgres 17 instance for experiments. Caddy fronts everything on port 443, terminating TLS and routing by SNI: static site, webdav handler, and a layer4 forward to local postgres for `db.varuniyer.net`.
 
 ## How it works
 
-- `Containerfile` builds on `quay.io/fedora/fedora-bootc:latest`. `setup.sh` installs `caddy`, `httpd`, `postgresql17-server`, and `stunnel`, removes `openssh-server`, then enables the services.
+- `Containerfile` builds on `quay.io/fedora/fedora-bootc:latest`. A separate stage uses `xcaddy` to compile Caddy with the `layer4` and `webdav` plugins. `setup.sh` installs `caddy` (for the user, group, and systemd unit) and `postgresql17-server`, swaps in the custom caddy binary, removes `openssh-server`, then enables the services.
 - On every push to `main`, GitHub Actions builds the image with `podman`, pushes it to `ghcr.io/varuniyer/bootc-setup:latest`, and rebuilds a GCP disk image as a recovery seed.
 - The running VM updates itself from GHCR via the `bootc-fetch-apply-updates` timer. The GCP image is only for new VMs and disaster recovery.
 
@@ -21,15 +21,22 @@ bootc-based Fedora image for varuniyer.net. Runs the website, WebDAV, and a Post
 
 ## Access
 
-Postgres is exposed via stunnel on `:5433` (TLS 1.3 PSK only). Any client with the PSK runs stunnel locally pointing `127.0.0.1:5432 -> varuniyer.net:5433`, then connects with `psql -h 127.0.0.1 -U experiments experiments`.
+Postgres is exposed via Caddy's `layer4` listener on `db.varuniyer.net:443`. Caddy terminates TLS using the same Let's Encrypt cert that fronts the website, then forwards plain protocol bytes to postgres on localhost. Authorized clients connect with:
+
+```
+psql 'postgresql://experiments:<PASSWORD>@db.varuniyer.net:443/experiments?sslmode=verify-full&sslnegotiation=direct'
+```
+
+`sslnegotiation=direct` requires libpq 17+ on the client.
 
 ## Layout
 
-- `Containerfile`: image definition; final stage runs `setup.sh` once.
-- `setup.sh`: all build-time mutations (packages, sed, service enables).
-- `post-startup.{sh,service}`: boot-time, idempotent. Creates `/var` state dirs with correct ownership, runs `postgresql-setup --initdb` and bootstraps the `experiments` role+db on first boot, refreshes Postgres configs each boot.
-- `Caddyfile`, `webdav.conf`, `prepare-root.conf`, `bootc.json`, `stunnel/postgres.conf`: standalone configs, each COPY'd to their target paths.
-- `provision.sh`: generates a stunnel PSK and prompts for a WebDAV password, writes the PSK to `~/.config/stunnel/postgres.psk`, then creates the GCP instance with both secrets in instance metadata. `post-startup.sh` fetches them each boot: PSK is written to `/etc/stunnel/psk.txt`; caddy hash is substituted into the Caddyfile template.
-- `postgresql/`: `postgresql.conf`, `pg_hba.conf` (copied into `/var/lib/pgsql/data/` each boot by `post-startup.sh`), and `bootstrap.sql` (run once on first-boot init to create the `experiments` role+db and lock down PUBLIC connect).
+- `Containerfile`: image definition. Multi-stage build includes an `xcaddy` step that produces a custom caddy binary with `layer4` + `webdav` plugins. Final stage runs `setup.sh` once.
+- `setup.sh`: all build-time mutations (packages, custom caddy binary install, service enables).
+- `post-startup.{sh,service}`: boot-time, idempotent. Creates `/var` state dirs with correct ownership, runs `postgresql-setup --initdb` on first boot, refreshes Postgres configs each boot, delegates first-boot SQL to `bootstrap.sh`.
+- `bootstrap.sh`: first-boot postgres bootstrap. Runs `postgresql/bootstrap.sql` and applies the SCRAM verifier from instance metadata as the `experiments` role's password.
+- `Caddyfile`, `prepare-root.conf`, `bootc.json`: standalone configs, each COPY'd to their target paths.
+- `provision.sh`: prompts for postgres and WebDAV passwords, hashes both locally (postgres via an ephemeral local postgres, webdav via `caddy hash-password`), then creates the GCP instance with both hashes in instance metadata. `post-startup.sh` fetches them on first boot: postgres hash is applied by `bootstrap.sh`, caddy hash is substituted into the Caddyfile template.
+- `postgresql/`: `postgresql.conf`, `pg_hba.conf` (copied into `/var/lib/pgsql/data/` each boot by `post-startup.sh`), and `bootstrap.sql` (role+db creation SQL run once on first boot by `bootstrap.sh`).
 - `website/`: static site sources (Hugo).
 - `build-disk.sh` and `.github/workflows/build.yml`: CI for GHCR push and GCP image build.

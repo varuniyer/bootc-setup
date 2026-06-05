@@ -1,7 +1,7 @@
 [Unit]
 Description=Provision /var state before services start
 After=local-fs.target network.target
-Before=httpd.service postgresql.service caddy.service stunnel@postgres.service
+Before=postgresql.service caddy.service
 
 [Service]
 Type=oneshot
