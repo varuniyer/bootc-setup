@@ -19,7 +19,7 @@
 						sni db.varuniyer.net
 						alpn postgresql
 					}
-					remote_ip POSTGRES_IP_WHITELIST
+					remote_ip POSTGRES_IP_ALLOWLIST
 				}
 				route @postgres {
 					tls {

@@ -32,4 +32,4 @@ gcloud compute instances create bootc \
     --shielded-integrity-monitoring \
     --no-service-account \
     --no-scopes \
-    --metadata "^@^postgres-experiments-scram=${PG_HASH}@caddy-hashed-password=${CADDY_HASH}@postgres-ip-whitelist=${POSTGRES_IPS}"
+    --metadata "^@^postgres-experiments-scram=${PG_HASH}@caddy-hashed-password=${CADDY_HASH}@postgres-ip-allowlist=${POSTGRES_IPS}"

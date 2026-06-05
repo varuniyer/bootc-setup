@@ -21,7 +21,7 @@ bootc-based Fedora image for varuniyer.net. Runs the website, WebDAV, and a Post
 
 ## Access
 
-Postgres is exposed via Caddy's `layer4` listener on `db.varuniyer.net:443`. Caddy terminates TLS using the same Let's Encrypt cert that fronts the website, then forwards plain protocol bytes to postgres on localhost. Only source IPs in the `postgres-ip-whitelist` instance metadata reach the postgres route, the rest are dropped at the layer4 matcher. Authorized clients connect with:
+Postgres is exposed via Caddy's `layer4` listener on `db.varuniyer.net:443`. Caddy terminates TLS using the same Let's Encrypt cert that fronts the website, then forwards plain protocol bytes to postgres on localhost. Only source IPs in the `postgres-ip-allowlist` instance metadata reach the postgres route, the rest are dropped at the layer4 matcher. Authorized clients connect with:
 
 ```
 psql 'postgresql://experiments:<PASSWORD>@db.varuniyer.net:443/experiments?sslmode=verify-full&sslnegotiation=direct&sslrootcert=system'
