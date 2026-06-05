@@ -34,4 +34,4 @@ gcloud compute instances create bootc \
     --tags=http-server,https-server,no-ssh \
     --shielded-vtpm \
     --shielded-integrity-monitoring \
-    --metadata "postgres-experiments-scram=${PG_HASH},caddy-hashed-password=${CADDY_HASH}"
+    --metadata "^@^postgres-experiments-scram=${PG_HASH}@caddy-hashed-password=${CADDY_HASH}"

@@ -1,6 +1,7 @@
 
 {
 	email acme@varuniyer.net
+	order webdav before file_server
 
 	log access {
 		output file /var/log/caddy/access.log {
