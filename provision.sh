@@ -18,6 +18,8 @@ read -rsp 'WebDAV password: ' CADDY_PASSWORD
 printf '\n'
 CADDY_HASH=$(caddy hash-password --algorithm argon2id --plaintext "$CADDY_PASSWORD")
 
+read -rp 'Postgres allowlist IPs (space-separated): ' POSTGRES_IPS
+
 gcloud compute instances create bootc \
     --zone="$ZONE" \
     --machine-type=e2-small \
@@ -30,4 +32,4 @@ gcloud compute instances create bootc \
     --shielded-integrity-monitoring \
     --no-service-account \
     --no-scopes \
-    --metadata "^@^postgres-experiments-scram=${PG_HASH}@caddy-hashed-password=${CADDY_HASH}"
+    --metadata "^@^postgres-experiments-scram=${PG_HASH}@caddy-hashed-password=${CADDY_HASH}@postgres-ip-whitelist=${POSTGRES_IPS}"

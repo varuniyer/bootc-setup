@@ -14,9 +14,12 @@
 	servers {
 		listener_wrappers {
 			layer4 {
-				@postgres tls {
-					sni db.varuniyer.net
-					alpn postgresql
+				@postgres {
+					tls {
+						sni db.varuniyer.net
+						alpn postgresql
+					}
+					remote_ip POSTGRES_IP_WHITELIST
 				}
 				route @postgres {
 					tls {

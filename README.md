@@ -21,7 +21,7 @@ bootc-based Fedora image for varuniyer.net. Runs the website, WebDAV, and a Post
 
 ## Access
 
-Postgres is exposed via Caddy's `layer4` listener on `db.varuniyer.net:443`. Caddy terminates TLS using the same Let's Encrypt cert that fronts the website, then forwards plain protocol bytes to postgres on localhost. Authorized clients connect with:
+Postgres is exposed via Caddy's `layer4` listener on `db.varuniyer.net:443`. Caddy terminates TLS using the same Let's Encrypt cert that fronts the website, then forwards plain protocol bytes to postgres on localhost. Only source IPs in the `postgres-ip-whitelist` instance metadata reach the postgres route, the rest are dropped at the layer4 matcher. Authorized clients connect with:
 
 ```
 psql 'postgresql://experiments:<PASSWORD>@db.varuniyer.net:443/experiments?sslmode=verify-full&sslnegotiation=direct&sslrootcert=system'
@@ -36,7 +36,7 @@ psql 'postgresql://experiments:<PASSWORD>@db.varuniyer.net:443/experiments?sslmo
 - `post-startup.{sh,service}`: boot-time, idempotent. Creates `/var` state dirs with correct ownership, runs `postgresql-setup --initdb` on first boot, refreshes Postgres configs each boot, delegates first-boot SQL to `bootstrap.sh`.
 - `bootstrap.sh`: first-boot postgres bootstrap. Runs `postgresql/bootstrap.sql` and applies the SCRAM verifier from instance metadata as the `experiments` role's password.
 - `Caddyfile`, `prepare-root.conf`, `bootc.json`: standalone configs, each COPY'd to their target paths.
-- `provision.sh`: prompts for postgres and WebDAV passwords, hashes both locally (postgres via an ephemeral local postgres, webdav via `caddy hash-password`), then creates the GCP instance with both hashes in instance metadata. `post-startup.sh` fetches them on first boot: postgres hash is applied by `bootstrap.sh`, caddy hash is substituted into the Caddyfile template.
+- `provision.sh`: prompts for postgres and WebDAV passwords plus the postgres IP allowlist, hashes the passwords locally (postgres via an ephemeral local postgres, webdav via `caddy hash-password`), then creates the GCP instance with the hashes and the allowlist in instance metadata. `post-startup.sh` fetches them on first boot: postgres hash is applied by `bootstrap.sh`, caddy hash and IP allowlist are substituted into the Caddyfile template.
 - `postgresql/`: `postgresql.conf`, `pg_hba.conf` (copied into `/var/lib/pgsql/data/` each boot by `post-startup.sh`), and `bootstrap.sql` (role+db creation SQL run once on first boot by `bootstrap.sh`).
 - `website/`: static site sources (Hugo).
 - `build-disk.sh` and `.github/workflows/build.yml`: CI for GHCR push and GCP image build.
