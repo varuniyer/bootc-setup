@@ -62,6 +62,12 @@ dav.varuniyer.net {
 	}
 }
 
+db.varuniyer.net {
+	# Site exists only so Caddy provisions a cert for this SNI.
+	# Real traffic is intercepted by the layer4 route in global options.
+	respond "use postgresql protocol" 421
+}
+
 mta-sts.varuniyer.net {
 	import security_headers
 	@mta-sts path /.well-known/mta-sts.txt
