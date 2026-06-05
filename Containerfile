@@ -33,7 +33,7 @@ RUN find public -type f \( \
 # Stage 3: Caddy with layer4 + webdav plugins
 # --------------------------------------
 FROM docker.io/library/caddy:builder AS caddy-build
-RUN xcaddy build --with github.com/mholt/caddy-l4 --with github.com/mholt/caddy-webdav --with github.com/caddy-dns/desec
+RUN xcaddy build --with github.com/mholt/caddy-l4 --with github.com/mholt/caddy-webdav
 
 
 # --------------------------------------

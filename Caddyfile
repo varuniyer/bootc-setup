@@ -1,7 +1,6 @@
 
 {
 	email acme@varuniyer.net
-	acme_dns desec DESEC_TOKEN
 	order webdav before file_server
 
 	log access {
@@ -71,6 +70,12 @@ dav.varuniyer.net {
 	}
 }
 
+db.varuniyer.net {
+	# Site exists only so Caddy provisions a cert for this SNI.
+	# Real traffic is intercepted by the layer4 route in global options.
+	respond "use postgresql protocol" 421
+}
+
 mta-sts.varuniyer.net {
 	import security_headers
 	@mta-sts path /.well-known/mta-sts.txt
@@ -80,10 +85,4 @@ mx: mx1.forwardemail.net
 mx: mx2.forwardemail.net
 max_age: 2419200` 200
 	header @mta-sts Content-Type "text/plain; charset=utf-8"
-}
-
-# Triggers wildcard cert issuance via DNS-01 so the layer4 route for
-# db.varuniyer.net has a cert to serve. Unknown subdomains get aborted.
-*.varuniyer.net {
-	abort
 }

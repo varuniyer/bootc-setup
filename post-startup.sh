@@ -16,8 +16,9 @@ mkdir -p /var/log/caddy
 chown caddy:caddy /var/log/caddy
 chmod 0750 /var/log/caddy
 CADDY_HASH=$(fetch_metadata caddy-hashed-password)
-DESEC_TOKEN=$(fetch_metadata desec-token)
-sed -e "s|CADDY_HASHED_PASSWORD|${CADDY_HASH}|" -e "s|DESEC_TOKEN|${DESEC_TOKEN}|" /usr/etc/caddy/Caddyfile > /etc/caddy/Caddyfile
+if [ -n "$CADDY_HASH" ]; then
+    sed "s|CADDY_HASHED_PASSWORD|${CADDY_HASH}|" /usr/etc/caddy/Caddyfile > /etc/caddy/Caddyfile
+fi
 
 # postgres: initdb on first boot, refresh configs every boot, delegate first-boot SQL to bootstrap.sh
 need_bootstrap=

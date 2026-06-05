@@ -18,9 +18,6 @@ read -rsp 'WebDAV password: ' CADDY_PASSWORD
 printf '\n'
 CADDY_HASH=$(caddy hash-password --algorithm argon2id --plaintext "$CADDY_PASSWORD")
 
-read -rsp 'desec API token: ' DESEC_TOKEN
-printf '\n'
-
 gcloud compute instances create bootc \
     --zone="$ZONE" \
     --machine-type=e2-small \
@@ -28,7 +25,7 @@ gcloud compute instances create bootc \
     --boot-disk-size=25GB \
     --boot-disk-type=pd-standard \
     --address=bootc-ip \
-    --tags=https-server \
+    --shielded-secure-boot \
     --shielded-vtpm \
     --shielded-integrity-monitoring \
-    --metadata "^@^postgres-experiments-scram=${PG_HASH}@caddy-hashed-password=${CADDY_HASH}@desec-token=${DESEC_TOKEN}"
+    --metadata "^@^postgres-experiments-scram=${PG_HASH}@caddy-hashed-password=${CADDY_HASH}"
