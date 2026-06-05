@@ -54,7 +54,7 @@ varuniyer.info, varuniyer.me, www.varuniyer.net, www.varuniyer.info, www.varuniy
 
 dav.varuniyer.net {
 	import security_headers
-	basic_auth {
+	basic_auth argon2id {
 		davuser CADDY_HASHED_PASSWORD
 	}
 	webdav {
