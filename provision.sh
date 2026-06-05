@@ -18,6 +18,12 @@ read -rsp 'WebDAV password: ' CADDY_PASSWORD
 printf '\n'
 CADDY_HASH=$(caddy hash-password --algorithm argon2id --plaintext "$CADDY_PASSWORD")
 
+# Firewall rules from firewall.conf. Delete + recreate so edits to existing rules apply.
+while read -r name action rule tag; do
+    gcloud compute firewall-rules delete "$name" --quiet >/dev/null 2>&1 || true
+    gcloud compute firewall-rules create "$name" --direction=INGRESS --action="$action" --rules="$rule" --target-tags="$tag"
+done < firewall.conf
+
 gcloud compute instances create bootc \
     --zone="$ZONE" \
     --machine-type=e2-small \
@@ -25,6 +31,7 @@ gcloud compute instances create bootc \
     --boot-disk-size=25GB \
     --boot-disk-type=pd-standard \
     --address=bootc-ip \
+    --tags=http-server,https-server,no-ssh \
     --shielded-vtpm \
     --shielded-integrity-monitoring \
     --metadata "postgres-experiments-scram=${PG_HASH},caddy-hashed-password=${CADDY_HASH}"
