@@ -27,7 +27,7 @@ Postgres is exposed via Caddy's `layer4` listener on `db.varuniyer.net:443`. Cad
 psql 'postgresql://experiments:<PASSWORD>@db.varuniyer.net:443/experiments?sslmode=verify-full&sslnegotiation=direct&sslrootcert=system'
 ```
 
-`sslnegotiation=direct` requires libpq 17+ on the client.
+`sslnegotiation=direct` requires libpq 17 on the client.
 
 ## Layout
 
