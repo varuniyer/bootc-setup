@@ -22,11 +22,7 @@
 					remote_ip POSTGRES_IP_ALLOWLIST
 				}
 				route @postgres {
-					tls {
-						connection_policy {
-							alpn postgresql
-						}
-					}
+					tls
 					proxy tcp/127.0.0.1:5432
 				}
 			}
