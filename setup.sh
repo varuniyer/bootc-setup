@@ -4,7 +4,7 @@ set -euo pipefail
 # ----------------------------
 # Packages
 # ----------------------------
-dnf install -y caddy postgresql17-server gettext-envsubst
+dnf install -y --setopt=install_weak_deps=False caddy postgresql17-server gettext-envsubst
 dnf remove -y openssh-server
 dnf clean all
 
@@ -24,8 +24,22 @@ rmdir /var/roothome
 
 
 # ----------------------------
+# Build-time ownership/perms so post-startup-root needs no CAP_CHOWN at runtime.
+# The `creds` group bridges root and postgres: root can chgrp to a group it's in
+# without the cap, postgres reads files in the group via membership.
+# ----------------------------
+mkdir -p /var/lib/webdav/data
+chmod 0700 /var/lib/webdav /var/lib/webdav/data
+chown -R caddy:caddy /var/lib/webdav
+
+chown root:caddy /etc/caddy/Caddyfile
+chmod 0640 /etc/caddy/Caddyfile
+
+groupadd -r creds
+usermod -aG creds root
+usermod -aG creds postgres
+
+# ----------------------------
 # Services
 # ----------------------------
-systemctl enable nftables.service post-startup.service caddy.service postgresql.service bootc-fetch-apply-updates.timer
-
-chmod +x /usr/libexec/post-startup.sh /usr/libexec/bootstrap.sh /usr/bin/fetch_metadata
+systemctl enable nftables.service post-startup-root.service post-startup.service caddy.service postgresql.service bootc-fetch-apply-updates.timer

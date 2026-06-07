@@ -17,7 +17,7 @@ PG_HASH=$(printf '%s' "$PG_PASSWORD" | podman run --rm -i --user postgres \
 
 read -rsp 'WebDAV password: ' CADDY_PASSWORD
 printf '\n'
-CADDY_HASH=$(echo "$CADDY_PASSWORD" | caddy hash-password --algorithm argon2id)
+CADDY_HASH=$(printf '%s' "$CADDY_PASSWORD" | caddy hash-password --algorithm argon2id)
 
 read -rp 'Postgres allowlist IPs (space-separated): ' POSTGRES_IPS
 

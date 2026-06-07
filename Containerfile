@@ -55,12 +55,12 @@ COPY postgresql/ /usr/share/postgres/
 # nftables firewall (loaded by stock nftables.service)
 COPY nftables.conf /etc/sysconfig/nftables.conf
 
-# Scripts and units
-COPY setup.sh             /usr/libexec/setup.sh
-COPY post-startup.sh      /usr/libexec/post-startup.sh
-COPY bootstrap.sh         /usr/libexec/bootstrap.sh
-COPY fetch_metadata.sh    /usr/bin/fetch_metadata
-COPY post-startup.service /usr/lib/systemd/system/post-startup.service
+ENV PATH="/opt/scripts:${PATH}"
+COPY setup.sh post-startup-root.sh post-startup.sh bootstrap.sh fetch_metadata.sh /opt/scripts/
+COPY post-startup-root.service /usr/lib/systemd/system/post-startup-root.service
+COPY post-startup.service      /usr/lib/systemd/system/post-startup.service
+COPY caddy.override.conf       /usr/lib/systemd/system/caddy.service.d/override.conf
+COPY postgresql.override.conf  /usr/lib/systemd/system/postgresql.service.d/override.conf
 
 # Single build-time mutation layer
-RUN bash /usr/libexec/setup.sh
+RUN chmod +x /opt/scripts/* && setup.sh

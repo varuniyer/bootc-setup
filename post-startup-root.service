@@ -1,14 +1,13 @@
 [Unit]
-Description=Postgres-side boot setup (initdb, configs, bootstrap)
-After=post-startup-root.service
-Before=postgresql.service
+Description=Root-side boot setup (Caddyfile, postgres hash)
+After=local-fs.target network.target
+Before=caddy.service post-startup.service
 
 [Service]
 Type=oneshot
-User=postgres
-Group=postgres
-ExecStart=/opt/scripts/post-startup.sh
+ExecStart=/opt/scripts/post-startup-root.sh
 RemainAfterExit=yes
+RuntimeDirectory=post-startup
 
 ProtectSystem=strict
 ProtectHome=true
@@ -23,7 +22,7 @@ RestrictAddressFamilies=AF_UNIX AF_INET
 SystemCallFilter=@system-service
 SystemCallArchitectures=native
 CapabilityBoundingSet=
-ReadWritePaths=/var/lib/pgsql /run/postgresql
+ReadWritePaths=/etc/caddy/Caddyfile
 
 [Install]
 WantedBy=multi-user.target
