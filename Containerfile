@@ -51,6 +51,10 @@ COPY Caddyfile              /etc/caddy/Caddyfile
 # Grouped configs
 COPY postgresql/ /usr/share/postgres/
 
+# Metadata-server firewall
+COPY metadata-guard.nft     /usr/share/nftables/metadata-guard.nft
+COPY metadata-guard.service /usr/lib/systemd/system/metadata-guard.service
+
 # Scripts and units
 COPY setup.sh             /usr/libexec/setup.sh
 COPY post-startup.sh      /usr/libexec/post-startup.sh

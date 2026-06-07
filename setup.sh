@@ -25,6 +25,6 @@ rmdir /var/roothome
 # ----------------------------
 # Services
 # ----------------------------
-systemctl enable post-startup.service caddy.service postgresql.service bootc-fetch-apply-updates.timer
+systemctl enable metadata-guard.service post-startup.service caddy.service postgresql.service bootc-fetch-apply-updates.timer
 
 chmod +x /usr/libexec/post-startup.sh /usr/libexec/bootstrap.sh
