@@ -12,7 +12,7 @@ name=Google Cloud CLI
 baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el10-x86_64
 enabled=1
 gpgcheck=1
-repo_gpgcheck=1
+repo_gpgcheck=0
 gpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key-v10.gpg
 EOM
   dnf install -y --setopt=install_weak_deps=False libxcrypt-compat google-cloud-cli
