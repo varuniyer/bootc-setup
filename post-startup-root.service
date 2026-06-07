@@ -1,7 +1,7 @@
 [Unit]
 Description=Root-side boot setup (Caddyfile, postgres hash)
-After=local-fs.target network.target
-Before=caddy.service post-startup.service
+Requires=nftables.service network-online.target
+After=local-fs.target network-online.target nftables.service
 
 [Service]
 Type=oneshot

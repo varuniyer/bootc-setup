@@ -11,5 +11,5 @@ cp /usr/share/postgres/*.conf /var/lib/pgsql/data/
 chmod 0600 /var/lib/pgsql/data/*.conf
 
 if [ -f /run/post-startup/hash ]; then
-    PG_HASH=$(cat /run/post-startup/hash) /opt/scripts/bootstrap.sh
+    /opt/scripts/bootstrap.sh
 fi

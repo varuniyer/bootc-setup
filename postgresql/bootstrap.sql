@@ -2,4 +2,4 @@ CREATE ROLE experiments LOGIN;
 CREATE DATABASE experiments OWNER experiments;
 REVOKE CONNECT ON DATABASE postgres FROM PUBLIC;
 REVOKE CONNECT ON DATABASE template1 FROM PUBLIC;
-ALTER ROLE experiments PASSWORD :'hash';
+ALTER ROLE experiments PASSWORD :hash;

@@ -1,13 +1,14 @@
 [Unit]
 Description=Postgres-side boot setup (initdb, configs, bootstrap)
+Requires=post-startup-root.service
 After=post-startup-root.service
-Before=postgresql.service
 
 [Service]
 Type=oneshot
 User=postgres
 Group=postgres
 ExecStart=/opt/scripts/post-startup.sh
+ExecStartPost=+/usr/bin/rm -f /run/post-startup/hash
 RemainAfterExit=yes
 
 ProtectSystem=strict
@@ -23,7 +24,7 @@ RestrictAddressFamilies=AF_UNIX AF_INET
 SystemCallFilter=@system-service
 SystemCallArchitectures=native
 CapabilityBoundingSet=
-ReadWritePaths=/var/lib/pgsql /run/postgresql
+ReadWritePaths=/var/lib/pgsql /run/postgresql /run/post-startup
 
 [Install]
 WantedBy=multi-user.target
