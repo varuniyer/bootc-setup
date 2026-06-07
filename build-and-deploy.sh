@@ -5,8 +5,6 @@ IMAGE="$CI_REGISTRY_IMAGE:latest"
 GCS_BUCKET="bootc"
 GCE_IMAGE="bootc"
 
-export STORAGE_DRIVER=vfs
-
 if ! command -v gcloud >/dev/null; then
   tee /etc/yum.repos.d/google-cloud-sdk.repo > /dev/null << EOM
 [google-cloud-cli]
