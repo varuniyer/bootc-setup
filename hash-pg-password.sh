@@ -1,9 +1,10 @@
 #!/bin/sh
 set -eu
 
-# Runs inside postgres:17-alpine. Expects PW env var with the plaintext password.
+# Runs inside postgres:17-alpine. Reads the plaintext password from stdin.
 # Outputs the SCRAM-SHA-256 verifier on stdout.
 
+PW=$(cat)
 ESC=$(printf '%s' "$PW" | sed "s/'/''/g")
 DIR=$(mktemp -d)
 initdb -D "$DIR" -A trust -U pg --no-instructions >/dev/null 2>&1

@@ -11,8 +11,8 @@ ZONE=us-central1-a
 # Postgres password as SCRAM-SHA-256 verifier, hashed inside an ephemeral postgres:17-alpine container.
 read -rsp 'Postgres password: ' PG_PASSWORD
 printf '\n'
-PG_HASH=$(podman run --rm -i --user postgres -e PW="$PG_PASSWORD" \
-    docker.io/library/postgres:17-alpine /bin/sh < hash-pg-password.sh)
+PG_HASH=$(printf '%s' "$PG_PASSWORD" | podman run --rm -i --user postgres \
+    docker.io/library/postgres:17-alpine /bin/sh -c "$(cat hash-pg-password.sh)")
 
 read -rsp 'WebDAV password: ' CADDY_PASSWORD
 printf '\n'
