@@ -58,6 +58,7 @@ COPY nftables.conf /etc/sysconfig/nftables.conf
 COPY setup.sh             /usr/libexec/setup.sh
 COPY post-startup.sh      /usr/libexec/post-startup.sh
 COPY bootstrap.sh         /usr/libexec/bootstrap.sh
+COPY fetch_metadata.sh    /usr/bin/fetch_metadata
 COPY post-startup.service /usr/lib/systemd/system/post-startup.service
 
 # Single build-time mutation layer

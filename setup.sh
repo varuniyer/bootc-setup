@@ -27,4 +27,4 @@ rmdir /var/roothome
 # ----------------------------
 systemctl enable nftables.service post-startup.service caddy.service postgresql.service bootc-fetch-apply-updates.timer
 
-chmod +x /usr/libexec/post-startup.sh /usr/libexec/bootstrap.sh
+chmod +x /usr/libexec/post-startup.sh /usr/libexec/bootstrap.sh /usr/bin/fetch_metadata

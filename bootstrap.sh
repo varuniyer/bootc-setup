@@ -5,11 +5,6 @@ set -euo pipefail
 # experiments role's password from instance metadata. Assumes /var/lib/pgsql/data
 # is already initdb'd and configs are in place.
 
-fetch_metadata() {
-    curl -sf -H "Metadata-Flavor: Google" \
-        "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$1" || true
-}
-
 PG_HASH=$(fetch_metadata postgres-experiments-scram)
 INIT_SQL=$(mktemp)
 trap 'rm -f "$INIT_SQL"' EXIT
