@@ -2,11 +2,9 @@
 # Stage 1: Hugo build
 # --------------------------------------
 FROM ghcr.io/gohugoio/hugo:latest AS hugo
-USER root
 WORKDIR /src
-COPY website/ .
-RUN mkdir -p public
-RUN hugo build --minify
+COPY --chown=hugo:hugo website/ .
+RUN mkdir -p public && hugo build --minify
 
 
 # --------------------------------------
