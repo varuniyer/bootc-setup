@@ -1,23 +1,12 @@
 # bootc-setup
 
-bootc-based Fedora image for varuniyer.net. Runs the website, WebDAV, and a Postgres 17 instance for experiments. Caddy fronts everything on port 443, terminating TLS and routing by SNI: static site, webdav handler, and a layer4 forward to local postgres for `db.varuniyer.net`.
+This repository defines a bootc-based Fedora image for [varuniyer.net](https://varuniyer.net) that runs the website, WebDAV, and a Postgres 17 instance for experiments. Caddy fronts everything on port 443, terminating TLS and routing by SNI between the static site, the WebDAV handler, and a layer4 forward to local postgres for `db.varuniyer.net`. The filesystem layout follows the conventions described in the [Fedora bootc documentation](https://docs.fedoraproject.org/en-US/bootc/).
 
 ## How it works
 
 - `Containerfile` builds on `quay.io/fedora/fedora-bootc:latest`. A separate stage uses `xcaddy` to compile Caddy with the `layer4` and `webdav` plugins. `setup.sh` installs `caddy` (for the user, group, and systemd unit) and `postgresql17-server`, swaps in the custom caddy binary, removes `openssh-server`, then enables the services.
 - On a recurring schedule, GitLab CI builds the image with `podman`, pushes it to `registry.gitlab.com/varuniyer/bootc-setup:latest`, and rebuilds a GCP disk image as a recovery seed.
 - The running VM updates itself from the GitLab registry via the `bootc-fetch-apply-updates` timer. The GCP image is only for new VMs and disaster recovery.
-
-## Filesystem
-
-- `/usr`: immutable. The container image's root content, swapped atomically by the `bootc-fetch-apply-updates` timer. `/bin`, `/sbin`, `/lib`, `/lib64` are symlinks into `/usr`.
-- `/etc`: transient tmpfs, repopulated from `/usr/etc` each boot. Runtime edits are lost on reboot. Bake persistent config into `/usr/etc` at image build.
-- `/var`: mutable and persistent. Survives auto-updates and reboots. Service state (`/var/lib/webdav`, `/var/lib/pgsql/data`, `/var/log/caddy`) lives here. `/home` and `/root` are symlinks into `/var`.
-- `/boot`, `/boot/efi`: managed by `bootupd`, updated as part of the `bootc-fetch-apply-updates` cycle.
-- `/run`, `/tmp`: tmpfs, cleared each boot.
-- `/sysroot`: read-only mount of the underlying ostree storage that backs bootc deployments. Not browsed directly.
-
-`/etc` and `/sysroot` behavior is configured in `/usr/lib/ostree/prepare-root.conf` (ostree is bootc's storage layer on Fedora today).
 
 ## Access
 
