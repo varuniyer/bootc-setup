@@ -11,22 +11,24 @@ ZONE=us-central1-a
 WORK=$(mktemp -d "$HOME/tmp/provision.XXXXXX")
 trap 'rm -rf "$WORK"; stty echo 2>/dev/null || true' EXIT
 
+read_password() {
+    # Prompt on stderr, read one line from /dev/tty with echo off, write
+    # to the given path with no trailing newline.
+    printf '%s' "$1" >&2
+    stty -echo
+    head -n 1 | tr -d '\n' > "$2"
+    stty echo
+    printf '\n' >&2
+}
+
 # Postgres password as SCRAM-SHA-256 verifier, hashed inside an ephemeral postgres:17-alpine container.
-printf 'Postgres password: ' >&2
-stty -echo
-head -n 1 | tr -d '\n' > "$WORK/pg-pw"
-stty echo
-printf '\n' >&2
+read_password 'Postgres password: ' "$WORK/pg-pw"
 podman run --rm -i --user postgres \
     -v "$PWD/hash-pg-password:/hash-pg-password:Z,ro" \
     docker.io/library/postgres:17-alpine /bin/sh /hash-pg-password/run.sh < "$WORK/pg-pw" > "$WORK/pg-hash"
 rm -f "$WORK/pg-pw"
 
-printf 'WebDAV password: ' >&2
-stty -echo
-head -n 1 | tr -d '\n' > "$WORK/caddy-pw"
-stty echo
-printf '\n' >&2
+read_password 'WebDAV password: ' "$WORK/caddy-pw"
 caddy hash-password --algorithm argon2id < "$WORK/caddy-pw" > "$WORK/caddy-hash"
 rm -f "$WORK/caddy-pw"
 
