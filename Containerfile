@@ -56,7 +56,7 @@ COPY postgresql/ /usr/share/postgres/
 COPY nftables.conf /etc/sysconfig/nftables.conf
 
 ENV PATH="/opt/scripts:${PATH}"
-COPY setup.sh post-startup-root.sh post-startup.sh bootstrap.sh fetch_metadata.sh /opt/scripts/
+COPY setup.sh post-startup-root.sh post-startup.sh bootstrap.sh fetch_metadata.sh hash-pg-password/psql_set.sh /opt/scripts/
 COPY post-startup-root.service /usr/lib/systemd/system/post-startup-root.service
 COPY post-startup.service      /usr/lib/systemd/system/post-startup.service
 COPY caddy.override.conf       /usr/lib/systemd/system/caddy.service.d/override.conf
