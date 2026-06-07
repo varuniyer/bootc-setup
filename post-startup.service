@@ -30,7 +30,8 @@ RestrictAddressFamilies=AF_UNIX AF_INET
 SystemCallFilter=@system-service
 SystemCallArchitectures=native
 CapabilityBoundingSet=
-ReadWritePaths=/var/lib/pgsql /run/postgresql /run/post-startup
+ReadWritePaths=/var/lib/pgsql /run/postgresql
+ReadOnlyPaths=/run/post-startup
 
 [Install]
 WantedBy=multi-user.target

@@ -8,6 +8,7 @@ Type=oneshot
 ExecStart=/opt/scripts/post-startup-root.sh
 RemainAfterExit=yes
 RuntimeDirectory=post-startup
+RuntimeDirectoryMode=0750
 
 ProtectSystem=strict
 ProtectHome=true
