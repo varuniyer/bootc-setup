@@ -6,6 +6,4 @@ build-and-deploy:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
     - changes:
-        - "**/*"
-        - "!README.md"
-        - "!provision.sh"
+        - "**/!(README.md|provision.sh)"
