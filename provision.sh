@@ -24,7 +24,7 @@ gcloud compute instances create bootc \
     --zone="$ZONE" \
     --machine-type=e2-small \
     --image=bootc \
-    --boot-disk-size=25GB \
+    --boot-disk-size=200GB \
     --boot-disk-type=pd-standard \
     --address=bootc-ip \
     --shielded-secure-boot \
