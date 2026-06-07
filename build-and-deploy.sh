@@ -26,7 +26,7 @@ mkdir -p output
 STORAGE=$(podman info --format '{{.Store.GraphRoot}}')
 podman run --rm --privileged --pull=newer --security-opt label=type:unconfined_t \
   -v "$PWD/output:/output" -v "$STORAGE:/var/lib/containers/storage" \
-  quay.io/centos-bootc/bootc-image-builder:latest --in-vm --type raw --use-librepo=True --rootfs ext4 "$IMAGE"
+  quay.io/centos-bootc/bootc-image-builder:latest --type raw --use-librepo=True --rootfs ext4 "$IMAGE"
 
 tar --format=oldgnu -Sczf output/bootc.tar.gz -C output/image disk.raw
 
