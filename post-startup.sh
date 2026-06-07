@@ -11,7 +11,7 @@ CADDY_HASH=$(fetch_metadata caddy-hashed-password)
 POSTGRES_IPS=$(fetch_metadata postgres-ip-allowlist)
 if [ -n "$CADDY_HASH" ] || [ -n "$POSTGRES_IPS" ]; then
     sed -e "s|CADDY_HASHED_PASSWORD|${CADDY_HASH}|" -e "s|POSTGRES_IP_ALLOWLIST|${POSTGRES_IPS}|" /usr/etc/caddy/Caddyfile > /etc/caddy/Caddyfile
-    chown caddy:caddy /etc/caddy/Caddyfile
+    chown root:caddy /etc/caddy/Caddyfile
     chmod 0640 /etc/caddy/Caddyfile
 fi
 

@@ -10,6 +10,7 @@ dnf clean all
 
 # Replace stock caddy with custom build (layer4 + webdav plugins).
 mv /tmp/caddy.custom /usr/bin/caddy
+restorecon /usr/bin/caddy
 
 # ----------------------------
 # Rebuild initramfs so prepare-root.conf's [etc] transient takes effect.

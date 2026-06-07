@@ -9,11 +9,14 @@ ExecStart=/usr/libexec/post-startup.sh
 RemainAfterExit=yes
 
 ProtectSystem=strict
+ProtectHome=true
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
 NoNewPrivileges=true
 PrivateTmp=true
+RestrictAddressFamilies=AF_UNIX AF_INET
+SystemCallFilter=@system-service
 ReadWritePaths=/var/lib/pgsql /var/lib/webdav /etc/caddy /run/postgresql
 
 [Install]
