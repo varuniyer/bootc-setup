@@ -1,6 +1,6 @@
 build-and-deploy:
   image: quay.io/podman/stable:latest
-  tags: [saas-linux-medium-amd64]
+  tags: [saas-linux-small-amd64]
   script:
     - bash build-and-deploy.sh
   rules:

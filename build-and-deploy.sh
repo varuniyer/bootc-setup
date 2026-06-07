@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-IMAGE="ghcr.io/varuniyer/bootc-setup:latest"
+IMAGE="$CI_REGISTRY_IMAGE:latest"
 GCS_BUCKET="bootc"
 GCE_IMAGE="bootc"
 
@@ -20,7 +20,7 @@ EOM
   dnf install -y --setopt=install_weak_deps=False libxcrypt-compat google-cloud-cli
 fi
 
-podman login ghcr.io -u "$GHCR_USER" -p "$GHCR_TOKEN"
+podman login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
 podman build -f Containerfile -t "$IMAGE" .
 podman push "$IMAGE"
 
