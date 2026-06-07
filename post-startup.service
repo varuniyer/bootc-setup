@@ -8,5 +8,13 @@ Type=oneshot
 ExecStart=/usr/libexec/post-startup.sh
 RemainAfterExit=yes
 
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+NoNewPrivileges=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/pgsql /var/lib/webdav /etc/caddy /run/postgresql
+
 [Install]
 WantedBy=multi-user.target
