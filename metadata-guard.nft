@@ -1,9 +1,0 @@
-#!/usr/sbin/nft -f
-# Restrict GCP metadata server (169.254.169.254) to root-owned sockets.
-
-table inet metadata-guard {
-    chain output {
-        type filter hook output priority filter; policy accept;
-        ip daddr 169.254.169.254 meta skuid != 0 reject
-    }
-}
