@@ -5,8 +5,8 @@ bootc-based Fedora image for varuniyer.net. Runs the website, WebDAV, and a Post
 ## How it works
 
 - `Containerfile` builds on `quay.io/fedora/fedora-bootc:latest`. A separate stage uses `xcaddy` to compile Caddy with the `layer4` and `webdav` plugins. `setup.sh` installs `caddy` (for the user, group, and systemd unit) and `postgresql17-server`, swaps in the custom caddy binary, removes `openssh-server`, then enables the services.
-- On every push to `main`, GitHub Actions builds the image with `podman`, pushes it to `ghcr.io/varuniyer/bootc-setup:latest`, and rebuilds a GCP disk image as a recovery seed.
-- The running VM updates itself from GHCR via the `bootc-fetch-apply-updates` timer. The GCP image is only for new VMs and disaster recovery.
+- On every push to `main` and every other day on schedule, GitLab CI builds the image with `podman`, pushes it to `registry.gitlab.com/varuniyer/bootc-setup:latest`, and rebuilds a GCP disk image as a recovery seed.
+- The running VM updates itself from the GitLab registry via the `bootc-fetch-apply-updates` timer. The GCP image is only for new VMs and disaster recovery.
 
 ## Filesystem
 
@@ -39,4 +39,4 @@ psql 'postgresql://experiments:<PASSWORD>@db.varuniyer.net:443/experiments?sslmo
 - `provision.sh`: prompts for postgres and WebDAV passwords plus the postgres IP allowlist, hashes the passwords locally (postgres via an ephemeral local postgres, webdav via `caddy hash-password`), then creates the GCP instance with the hashes and the allowlist in instance metadata. `post-startup.sh` fetches them on first boot: postgres hash is applied by `bootstrap.sh`, caddy hash and IP allowlist are substituted into the Caddyfile template.
 - `postgresql/`: `postgresql.conf`, `pg_hba.conf` (copied into `/var/lib/pgsql/data/` each boot by `post-startup.sh`), and `bootstrap.sql` (role+db creation SQL run once on first boot by `bootstrap.sh`).
 - `website/`: static site sources (Hugo).
-- `build-disk.sh` and `.github/workflows/build.yml`: CI for GHCR push and GCP image build.
+- `build-and-deploy.sh` and `.gitlab-ci.yml`: CI for image push and GCP image build.
