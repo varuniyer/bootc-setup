@@ -5,5 +5,3 @@ build-and-deploy:
     - bash build-and-deploy.sh
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
-    - changes:
-        - "**/!(README.md|provision.sh)"
