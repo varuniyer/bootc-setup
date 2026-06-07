@@ -5,6 +5,14 @@ IMAGE="$CI_REGISTRY_IMAGE:latest"
 GCS_BUCKET="bootc"
 GCE_IMAGE="bootc"
 
+mkdir -p "$HOME/.config/containers"
+tee "$HOME/.config/containers/storage.conf" > /dev/null << 'EOM'
+[storage]
+driver = "overlay"
+[storage.options.overlay]
+mount_program = ""
+EOM
+
 if ! command -v gcloud >/dev/null; then
   tee /etc/yum.repos.d/google-cloud-sdk.repo > /dev/null << EOM
 [google-cloud-cli]
