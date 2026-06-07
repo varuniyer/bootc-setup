@@ -9,16 +9,15 @@ set -euo pipefail
 ZONE=us-central1-a
 
 WORK=$(mktemp -d "$HOME/tmp/provision.XXXXXX")
-trap 'rm -rf "$WORK"; stty echo 2>/dev/null || true' EXIT
+trap 'rm -rf "$WORK"' EXIT
 
 read_password() {
-    # Prompt on stderr, read one line from /dev/tty with echo off, write
-    # to the given path with no trailing newline.
+    local line
     printf '%s' "$1" >&2
-    stty -echo
-    head -n 1 | tr -d '\n' > "$2"
-    stty echo
+    read -rs line
     printf '\n' >&2
+    printf '%s' "$line" > "$2"
+    unset line
 }
 
 # Postgres password as SCRAM-SHA-256 verifier, hashed inside an ephemeral postgres:17-alpine container.
