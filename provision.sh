@@ -12,7 +12,8 @@ ZONE=us-central1-a
 read -rsp 'Postgres password: ' PG_PASSWORD
 printf '\n'
 PG_HASH=$(printf '%s' "$PG_PASSWORD" | podman run --rm -i --user postgres \
-    docker.io/library/postgres:17-alpine /bin/sh -c "$(cat hash-pg-password.sh)")
+    -v "$PWD/hash-pg-password:/hash-pg-password:Z,ro" \
+    docker.io/library/postgres:17-alpine /bin/sh /hash-pg-password/run.sh)
 
 read -rsp 'WebDAV password: ' CADDY_PASSWORD
 printf '\n'

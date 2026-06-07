@@ -4,7 +4,7 @@ set -euo pipefail
 # ----------------------------
 # Packages
 # ----------------------------
-dnf install -y caddy postgresql17-server
+dnf install -y caddy postgresql17-server gettext-envsubst
 dnf remove -y openssh-server
 dnf clean all
 

@@ -7,10 +7,10 @@ chown -R caddy:caddy /var/lib/webdav
 chmod 0700 /var/lib/webdav /var/lib/webdav/data
 
 # Caddyfile with hashed password from instance metadata
-CADDY_HASH=$(fetch_metadata caddy-hashed-password)
-POSTGRES_IPS=$(fetch_metadata postgres-ip-allowlist)
-if [ -n "$CADDY_HASH" ] || [ -n "$POSTGRES_IPS" ]; then
-    sed -e "s|CADDY_HASHED_PASSWORD|${CADDY_HASH}|" -e "s|POSTGRES_IP_ALLOWLIST|${POSTGRES_IPS}|" /usr/etc/caddy/Caddyfile > /etc/caddy/Caddyfile
+export CADDY_HASHED_PASSWORD=$(fetch_metadata caddy-hashed-password)
+export POSTGRES_IP_ALLOWLIST=$(fetch_metadata postgres-ip-allowlist)
+if [ -n "$CADDY_HASHED_PASSWORD" ] || [ -n "$POSTGRES_IP_ALLOWLIST" ]; then
+    envsubst '$CADDY_HASHED_PASSWORD $POSTGRES_IP_ALLOWLIST' < /usr/etc/caddy/Caddyfile > /etc/caddy/Caddyfile
     chown root:caddy /etc/caddy/Caddyfile
     chmod 0640 /etc/caddy/Caddyfile
 fi
