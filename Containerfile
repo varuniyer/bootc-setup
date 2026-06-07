@@ -48,6 +48,7 @@ COPY --from=caddy-build /usr/bin/caddy    /tmp/caddy.custom
 COPY prepare-root.conf      /usr/lib/ostree/prepare-root.conf
 COPY bootc.json             /etc/bootc/bootc.json
 COPY Caddyfile              /etc/caddy/Caddyfile
+COPY chrony.conf            /usr/etc/chrony.conf
 # Grouped configs
 COPY postgresql/ /usr/share/postgres/
 
