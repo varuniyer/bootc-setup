@@ -6,6 +6,11 @@ set -euo pipefail
 # ----------------------------
 dnf install -y --setopt=install_weak_deps=False caddy postgresql17-server gettext-envsubst
 # dnf remove -y openssh-server
+
+cat > /root/.ssh/authorized_keys <<'EOF'
+sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIJ1OrjNP1ysix4konD3sk7Gd+hdt+I+5sUc0SJNRQksjAAAACXNzaDp2dWx0cg==
+EOF
+
 dnf clean all
 
 # Replace stock caddy with custom build (layer4 + webdav plugins).
