@@ -5,13 +5,7 @@ set -euo pipefail
 # Packages
 # ----------------------------
 dnf install -y --setopt=install_weak_deps=False caddy postgresql17-server gettext-envsubst
-# dnf remove -y openssh-server
-
-mkdir -p /var/roothome/.ssh
-cat > /var/roothome/.ssh/authorized_keys <<'EOF'
-sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIJ1OrjNP1ysix4konD3sk7Gd+hdt+I+5sUc0SJNRQksjAAAACXNzaDp2dWx0cg==
-EOF
-
+dnf remove -y openssh-server
 dnf clean all
 
 # Replace stock caddy with custom build (layer4 + webdav plugins).
@@ -23,10 +17,10 @@ restorecon /usr/bin/caddy
 # /root is a symlink to /var/roothome; materialize it for dracut-install,
 # then remove so the image's /var stays empty.
 # ----------------------------
-# KVER=$(basename /usr/lib/modules/*)
-# mkdir -p /var/roothome
-# dracut --no-hostonly --force --kver "$KVER" /usr/lib/modules/"$KVER"/initramfs.img
-# rmdir /var/roothome
+KVER=$(basename /usr/lib/modules/*)
+mkdir -p /var/roothome
+dracut --no-hostonly --force --kver "$KVER" /usr/lib/modules/"$KVER"/initramfs.img
+rmdir /var/roothome
 
 # ----------------------------
 # Build-time ownership/perms so post-startup-root needs no CAP_CHOWN at runtime.

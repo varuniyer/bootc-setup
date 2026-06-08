@@ -7,7 +7,7 @@ set -eu
 PW=$(cat)
 DIR=$(mktemp -d)
 initdb -D "$DIR" -A trust -U pg --no-instructions >/dev/null 2>&1
-pg_ctl -D "$DIR" -o "-k /tmp -h ''" -l "$DIR/log" start -w >/dev/null
+pg_ctl -D "$DIR" -o "-k /tmp -h ''" start -w >/dev/null
 {
     printf %s "$PW" | "$(dirname "$0")/psql_set.sh" pw
     cat "$(dirname "$0")/hash.sql"

@@ -4,7 +4,7 @@ set -euo pipefail
 # Runs as postgres on first boot. The hash flows through stdin so it stays
 # out of argv and env.
 
-pg_ctl -D /var/lib/pgsql/data -l /tmp/pg-init.log -w start
+pg_ctl -D /var/lib/pgsql/data -w start
 {
     /opt/scripts/psql_set.sh hash < /run/post-startup/hash
     cat /usr/share/postgres/bootstrap.sql
