@@ -7,6 +7,8 @@ After=local-fs.target network-online.target nftables.service
 Type=oneshot
 ExecStart=/opt/scripts/post-startup-root.sh
 RemainAfterExit=yes
+StandardOutput=console
+StandardError=console
 RuntimeDirectory=post-startup
 RuntimeDirectoryMode=0750
 
