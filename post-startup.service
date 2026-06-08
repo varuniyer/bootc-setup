@@ -10,8 +10,6 @@ Group=postgres
 ExecStart=/opt/scripts/post-startup.sh
 ExecStartPost=+/usr/bin/rm -f /run/post-startup/hash
 RemainAfterExit=yes
-StandardOutput=journal+console
-StandardError=journal+console
 
 ProtectSystem=strict
 ProtectHome=true

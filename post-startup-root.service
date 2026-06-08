@@ -7,8 +7,6 @@ After=local-fs.target network-online.target
 Type=oneshot
 ExecStart=/opt/scripts/post-startup-root.sh
 RemainAfterExit=yes
-StandardOutput=journal+console
-StandardError=journal+console
 RuntimeDirectory=post-startup
 RuntimeDirectoryMode=0750
 
