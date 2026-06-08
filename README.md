@@ -1,6 +1,6 @@
 # bootc-setup
 
-This repository defines a bootc-based Fedora image for [varuniyer.net](https://varuniyer.net) that runs the website, WebDAV, and a Postgres 17 instance for experiments. Caddy fronts everything on port 443, terminating TLS and routing by SNI between the static site, the WebDAV handler, and a layer4 forward to local postgres for `db.varuniyer.net`. The filesystem layout follows the conventions described in the [Fedora bootc documentation](https://docs.fedoraproject.org/en-US/bootc/).
+This repository defines a bootc-based Fedora image for [varuniyer.net](https://varuniyer.net) that runs the website, WebDAV, MTA-STS, and a Postgres 17 instance for experiments. Caddy listens on port 443. A layer4 listener wrapper intercepts direct-TLS Postgres connections for `db.varuniyer.net` using SNI, ALPN `postgresql`, and a source-IP allowlist. The listener terminates TLS using a publicly trusted ACME certificate for `db.varuniyer.net`, and proxies to local Postgres. The filesystem layout follows the conventions described in the [Fedora bootc documentation](https://docs.fedoraproject.org/en-US/bootc/).
 
 ## How it works
 
@@ -10,9 +10,11 @@ This repository defines a bootc-based Fedora image for [varuniyer.net](https://v
 
 ## Access
 
-Postgres is exposed via Caddy's `layer4` listener on `db.varuniyer.net:443`. Caddy terminates TLS using the same publicly trusted ACME cert that fronts the website, then forwards plain protocol bytes to postgres on localhost. Only source IPs in the `postgres-ip-allowlist` instance metadata reach the postgres route, the rest are dropped at the layer4 matcher. Authorized clients connect with:
+Postgres is exposed via Caddy's `layer4` listener wrapper on `db.varuniyer.net:443`. Caddy terminates TLS using a publicly trusted ACME certificate for `db.varuniyer.net`. Then, Caddy forwards plain Postgres protocol bytes to Postgres on localhost. Database access is limited to source IPs in the `postgres-ip-allowlist`.
 
-```
+Authorized clients connect with:
+
+```bash
 psql 'postgresql://experiments:<PASSWORD>@db.varuniyer.net:443/experiments?sslmode=verify-full&sslnegotiation=direct&sslrootcert=system'
 ```
 
@@ -22,10 +24,11 @@ psql 'postgresql://experiments:<PASSWORD>@db.varuniyer.net:443/experiments?sslmo
 
 - `Containerfile`: image definition. Multi-stage build includes an `xcaddy` step that produces a custom caddy binary with `layer4` + `webdav` plugins. Final stage runs `setup.sh` once.
 - `setup.sh`: all build-time mutations. Installs packages, swaps in the custom caddy binary, creates `/var` state directories with correct ownership and permissions, creates the `creds` group bridging root and postgres, and enables services.
-- `post-startup.{sh,service}`: boot-time, runs as postgres. On first boot, runs `initdb -D /var/lib/pgsql/data`. Copies Postgres configs from `/usr/share/postgres/` each boot. Delegates first-boot SQL to `bootstrap.sh`.
-- `bootstrap.sh`: first-boot postgres bootstrap. Runs `postgresql/bootstrap.sql` and applies the SCRAM verifier from instance metadata as the `experiments` role's password.
-- `Caddyfile`, `prepare-root.conf`, `bootc.json`: standalone configs, each COPY'd to their target paths. The `Caddyfile` contains template variables (`${CADDY_HASHED_PASSWORD}`, `${POSTGRES_IP_ALLOWLIST}`) that `post-startup-root.sh` substitutes from instance metadata on each boot.
-- `provision.sh`: prompts for postgres and WebDAV passwords plus the postgres IP allowlist, hashes the passwords locally (postgres via an ephemeral local postgres, webdav via `caddy hash-password`), then creates the GCP instance with the hashes and the allowlist in instance metadata. `post-startup.sh` fetches them on first boot: postgres hash is applied by `bootstrap.sh`, caddy hash and IP allowlist are substituted into the Caddyfile template.
+- `post-startup-root.{sh,service}`: root-side boot setup. Renders `/etc/caddy/Caddyfile` from the `/usr/etc` template using instance metadata, and on first boot stages the Postgres SCRAM verifier at `/run/post-startup/hash`.
+- `post-startup.{sh,service}`: postgres-side boot setup. Runs `initdb` on first boot, refreshes Postgres configs from `/usr/share/postgres/` each boot, and invokes `bootstrap.sh` when a staged SCRAM verifier is present.
+- `bootstrap.sh`: applies the first-boot SQL from `/usr/share/postgres/bootstrap.sql`, setting the `experiments` role password from the staged SCRAM verifier.
+- `Caddyfile`, `prepare-root.conf`, `bootc.json`: standalone configs copied to their target paths. `Caddyfile` is a template whose metadata-backed variables are rendered by `post-startup-root.sh`.
+- `provision.sh`: collects the Postgres/WebDAV passwords and Postgres IP allowlist, hashes passwords locally, and creates the GCP instance with the resulting hashes and allowlist in metadata.
 - `postgresql/`: `postgresql.conf`, `pg_hba.conf` (copied into `/var/lib/pgsql/data/` each boot by `post-startup.sh`), and `bootstrap.sql` (role+db creation SQL run once on first boot by `bootstrap.sh`).
 - `website/`: static site sources (Hugo).
 - `build-and-deploy.sh` and `.gitlab-ci.yml`: CI for image push and GCP image build.
