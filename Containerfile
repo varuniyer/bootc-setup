@@ -45,6 +45,7 @@ COPY --from=compress    /work/public      /usr/share/caddy
 COPY --from=caddy-build /usr/bin/caddy    /tmp/caddy.custom
 
 # Standalone config files
+COPY fstab                  /usr/etc/fstab
 COPY prepare-root.conf      /usr/lib/ostree/prepare-root.conf
 COPY bootc.json             /etc/bootc/bootc.json
 COPY Caddyfile              /etc/caddy/Caddyfile
