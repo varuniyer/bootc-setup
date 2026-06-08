@@ -16,7 +16,7 @@ read_password() {
     printf '%s' "$1" >&2
     read -rs line
     printf '\n' >&2
-    printf '%s' "$line" > "$2"
+    printf '%s\n' "$line" > "$2"
     unset line
 }
 
