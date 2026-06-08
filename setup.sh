@@ -23,11 +23,10 @@ restorecon /usr/bin/caddy
 # /root is a symlink to /var/roothome; materialize it for dracut-install,
 # then remove so the image's /var stays empty.
 # ----------------------------
-KVER=$(basename /usr/lib/modules/*)
-mkdir -p /var/roothome
-dracut --no-hostonly --force --kver "$KVER" /usr/lib/modules/"$KVER"/initramfs.img
-rmdir /var/roothome
-
+# KVER=$(basename /usr/lib/modules/*)
+# mkdir -p /var/roothome
+# dracut --no-hostonly --force --kver "$KVER" /usr/lib/modules/"$KVER"/initramfs.img
+# rmdir /var/roothome
 
 # ----------------------------
 # Build-time ownership/perms so post-startup-root needs no CAP_CHOWN at runtime.
