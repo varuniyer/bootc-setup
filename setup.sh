@@ -5,7 +5,7 @@ set -euo pipefail
 # Packages
 # ----------------------------
 dnf install -y --setopt=install_weak_deps=False caddy postgresql17-server gettext-envsubst
-dnf remove -y openssh-server
+# dnf remove -y openssh-server
 dnf clean all
 
 # Replace stock caddy with custom build (layer4 + webdav plugins).
@@ -42,4 +42,5 @@ usermod -aG creds postgres
 # ----------------------------
 # Services
 # ----------------------------
-systemctl enable nftables.service post-startup-root.service post-startup.service caddy.service postgresql.service bootc-fetch-apply-updates.timer
+# systemctl enable nftables.service
+systemctl enable post-startup-root.service post-startup.service caddy.service postgresql.service bootc-fetch-apply-updates.timer
