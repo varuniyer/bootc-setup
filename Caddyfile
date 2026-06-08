@@ -1,12 +1,7 @@
-
 {
 	email acme@varuniyer.net
 	order webdav before file_server
 	admin off
-
-	acme {
-		challenges tls-alpn-01
-	}
 
 	servers {
 		listener_wrappers {

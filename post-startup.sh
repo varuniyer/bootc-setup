@@ -8,7 +8,7 @@ if [ ! -d /var/lib/pgsql/data/base ]; then
 fi
 
 cp /usr/share/postgres/*.conf /var/lib/pgsql/data/
-chmod 0600 /var/lib/pgsql/data/*.conf
+chmod 0644 /var/lib/pgsql/data/*.conf
 
 if [ -f /run/post-startup/hash ]; then
     /opt/scripts/bootstrap.sh
