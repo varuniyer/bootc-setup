@@ -1,2 +1,3 @@
 #!/bin/sh
-printf '\\set %s %s\n' "$1" "$(cat)"
+escaped=$(cat | sed "s/'/''/g")
+printf "\\\\set %s '%s'\n" "$1" "$escaped"
