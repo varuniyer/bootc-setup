@@ -53,7 +53,7 @@ COPY Caddyfile              /etc/caddy/Caddyfile
 COPY postgresql/ /usr/share/postgres/
 
 ENV PATH="/opt/scripts:${PATH}"
-COPY setup.sh post-startup-root.sh post-startup.sh bootstrap.sh fetch_metadata.sh hash-pg-password/psql_set.sh /opt/scripts/
+COPY setup.sh post-startup-root.sh post-startup.sh bootstrap.sh fetch_metadata.sh /opt/scripts/
 COPY --chmod=0644 post-startup-root.service post-startup.service /usr/lib/systemd/system/
 COPY --chmod=0644 caddy.override.conf       /usr/lib/systemd/system/caddy.service.d/override.conf
 COPY --chmod=0644 postgresql.override.conf  /usr/lib/systemd/system/postgresql.service.d/override.conf

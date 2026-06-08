@@ -5,8 +5,6 @@ set -euo pipefail
 # out of argv and env.
 
 pg_ctl -D /var/lib/pgsql/data -w start
-{
-    /opt/scripts/psql_set.sh hash < /run/post-startup/hash
-    cat /usr/share/postgres/bootstrap.sql
-} | psql -h /run/postgresql -d postgres -v ON_ERROR_STOP=1 -tAqX
+hash=$(cat /run/post-startup/hash)
+psql -h /run/postgresql -d postgres -v ON_ERROR_STOP=1 -tAqX -v hash="$hash" -f /usr/share/postgres/bootstrap.sql
 pg_ctl -D /var/lib/pgsql/data -w stop
