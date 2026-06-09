@@ -26,11 +26,12 @@ read_password 'Postgres password: ' "$WORK/pg-pw"
 podman run --rm -i --user postgres \
     -v "$PWD/hash-pg-password:/hash-pg-password:Z,ro" \
     docker.io/library/postgres:17-alpine /bin/sh /hash-pg-password/run.sh < "$WORK/pg-pw" > "$WORK/pg-hash"
+rm "$WORK/pg-pw"
 
 read_password 'WebDAV username: ' "$WORK/dav-user"
 read_password 'WebDAV password: ' "$WORK/dav-pw"
 caddy hash-password --algorithm argon2id < "$WORK/dav-pw" > "$WORK/dav-hash"
-
+rm "$WORK/dav-pw"
 
 gcloud compute instances create bootc \
     --zone="$ZONE" \
