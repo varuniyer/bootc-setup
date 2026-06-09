@@ -7,7 +7,6 @@ set -euo pipefail
 # Usage: ./provision.sh
 
 ZONE=us-central1-a
-
 WORK=$(mktemp -d "$HOME/tmp/provision.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT
 
@@ -21,18 +20,17 @@ read_password() {
 }
 
 # Postgres password as SCRAM-SHA-256 verifier, hashed inside an ephemeral postgres:17-alpine container.
+read -rp 'Postgres allowlist IPs (space-separated): ' POSTGRES_IPS
+printf '%s' "$POSTGRES_IPS" > "$WORK/pg-ips"
 read_password 'Postgres password: ' "$WORK/pg-pw"
 podman run --rm -i --user postgres \
     -v "$PWD/hash-pg-password:/hash-pg-password:Z,ro" \
     docker.io/library/postgres:17-alpine /bin/sh /hash-pg-password/run.sh < "$WORK/pg-pw" > "$WORK/pg-hash"
-rm -f "$WORK/pg-pw"
 
-read_password 'WebDAV password: ' "$WORK/caddy-pw"
-caddy hash-password --algorithm argon2id < "$WORK/caddy-pw" > "$WORK/caddy-hash"
-rm -f "$WORK/caddy-pw"
+read_password 'WebDAV username: ' "$WORK/dav-user"
+read_password 'WebDAV password: ' "$WORK/dav-pw"
+caddy hash-password --algorithm argon2id < "$WORK/dav-pw" > "$WORK/dav-hash"
 
-read -rp 'Postgres allowlist IPs (space-separated): ' POSTGRES_IPS
-printf '%s' "$POSTGRES_IPS" > "$WORK/pg-ips"
 
 gcloud compute instances create bootc \
     --zone="$ZONE" \
@@ -46,4 +44,4 @@ gcloud compute instances create bootc \
     --shielded-integrity-monitoring \
     --no-service-account \
     --no-scopes \
-    --metadata-from-file "postgres-experiments-scram=$WORK/pg-hash,caddy-hashed-password=$WORK/caddy-hash,postgres-ip-allowlist=$WORK/pg-ips"
+    --metadata-from-file "postgres-ip-allowlist=$WORK/pg-ips,postgres-experiments-scram=$WORK/pg-hash,webdav-username=$WORK/dav-user,webdav-password-hash=$WORK/dav-hash"
