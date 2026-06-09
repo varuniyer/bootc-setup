@@ -1,5 +1,5 @@
 {
-	email acme@varuniyer.net
+	email ${ACME_EMAIL}
 	order webdav before file_server
 	admin off
 
@@ -8,7 +8,7 @@
 			layer4 {
 				@postgres {
 					tls {
-						sni db.varuniyer.net
+						sni db.${DOMAIN}
 						alpn postgresql
 					}
 					remote_ip ${POSTGRES_IP_ALLOWLIST}
@@ -37,7 +37,7 @@
 	}
 }
 
-varuniyer.net {
+${DOMAIN} {
 	import security_headers
 
 	root * /usr/share/caddy
@@ -51,11 +51,11 @@ varuniyer.net {
 	}
 }
 
-varuniyer.info, varuniyer.me, www.varuniyer.net, www.varuniyer.info, www.varuniyer.me {
-	redir https://varuniyer.net permanent
+${REDIR_LIST} {
+	redir https://${DOMAIN} permanent
 }
 
-dav.varuniyer.net {
+dav.${DOMAIN} {
 	import security_headers
 	basic_auth argon2id {
 		${WEBDAV_USERNAME} ${WEBDAV_PASSWORD_HASH}
@@ -65,19 +65,15 @@ dav.varuniyer.net {
 	}
 }
 
-db.varuniyer.net {
+db.${DOMAIN} {
 	# Site exists only so Caddy provisions a cert for this SNI.
 	# Real traffic is intercepted by the layer4 route in global options.
 	respond "use postgresql protocol" 421
 }
 
-mta-sts.varuniyer.net {
+mta-sts.${DOMAIN} {
 	import security_headers
 	@mta-sts path /.well-known/mta-sts.txt
-	respond @mta-sts `version: STSv1
-mode: enforce
-mx: mx1.forwardemail.net
-mx: mx2.forwardemail.net
-max_age: 2419200` 200
+	respond @mta-sts `${MTA_STS_TXT}` 200
 	header @mta-sts Content-Type "text/plain; charset=utf-8"
 }
