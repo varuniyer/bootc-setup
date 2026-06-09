@@ -50,6 +50,8 @@ COPY prepare-root.conf      /usr/lib/ostree/prepare-root.conf
 COPY bootc.json             /etc/bootc/bootc.json
 COPY Caddyfile              /etc/caddy/Caddyfile
 COPY journald.conf          /etc/systemd/journald.conf
+COPY nftables.conf          /etc/sysconfig/nftables.conf
+COPY 99-synproxy.conf       /usr/lib/sysctl.d/99-synproxy.conf
 # Grouped configs
 COPY postgresql/ /usr/share/postgres/
 

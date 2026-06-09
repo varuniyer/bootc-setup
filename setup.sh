@@ -41,4 +41,4 @@ usermod -aG creds postgres
 # ----------------------------
 # Services
 # ----------------------------
-systemctl enable post-startup-root.service post-startup-postgresql.service caddy.service postgresql.service bootc-fetch-apply-updates.timer
+systemctl enable systemd-sysctl nftables post-startup-root post-startup-postgresql caddy postgresql bootc-fetch-apply-updates.timer
