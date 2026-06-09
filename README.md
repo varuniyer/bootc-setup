@@ -24,11 +24,11 @@ psql 'postgresql://experiments:<PASSWORD>@db.varuniyer.net:443/experiments?sslmo
 
 - `Containerfile`: image definition. Multi-stage build includes an `xcaddy` step that produces a custom caddy binary with `layer4` + `webdav` plugins. Final stage runs `setup.sh` once.
 - `setup.sh`: all build-time mutations. Installs packages, swaps in the custom caddy binary, creates `/var` state directories with correct ownership and permissions, creates the `creds` group bridging root and postgres, and enables services.
-- `post-startup-root.{sh,service}`: root-side boot setup. Renders `/etc/caddy/Caddyfile` from the `/usr/etc` template using instance metadata, and on first boot stages the Postgres SCRAM verifier at `/run/post-startup/hash`.
-- `post-startup.{sh,service}`: postgres-side boot setup. Runs `initdb` on first boot, refreshes Postgres configs from `/usr/share/postgres/` each boot, and invokes `bootstrap.sh` when a staged SCRAM verifier is present.
+- `post-startup-root.{sh,service}`: root-side boot setup. Renders `/etc/caddy/Caddyfile` from the `/usr/etc` template using instance metadata, and on first boot stages the Postgres SCRAM verifier at `/run/post-startup-postgresql/hash`.
+- `post-startup-postgresql.{sh,service}`: postgres-side boot setup. Runs `initdb` on first boot, refreshes Postgres configs from `/usr/share/postgres/` each boot, and invokes `bootstrap.sh` when a staged SCRAM verifier is present.
 - `bootstrap.sh`: applies the first-boot SQL from `/usr/share/postgres/bootstrap.sql`, setting the `experiments` role password from the staged SCRAM verifier.
 - `Caddyfile`, `prepare-root.conf`, `bootc.json`: standalone configs copied to their target paths. `Caddyfile` is a template whose metadata-backed variables are rendered by `post-startup-root.sh`.
 - `provision.sh`: collects the Postgres/WebDAV passwords and Postgres IP allowlist, hashes passwords locally, and creates the GCP instance with the resulting hashes and allowlist in metadata.
-- `postgresql/`: `postgresql.conf`, `pg_hba.conf` (copied into `/var/lib/pgsql/data/` each boot by `post-startup.sh`), and `bootstrap.sql` (role+db creation SQL run once on first boot by `bootstrap.sh`).
+- `postgresql/`: `postgresql.conf`, `pg_hba.conf` (copied into `/var/lib/pgsql/data/` each boot by `post-startup-postgresql.sh`), and `bootstrap.sql` (role+db creation SQL run once on first boot by `bootstrap.sh`).
 - `website/`: static site sources (Hugo).
 - `build-and-deploy.sh` and `.gitlab-ci.yml`: CI for image push and GCP image build.

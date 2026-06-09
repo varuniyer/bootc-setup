@@ -9,12 +9,12 @@ envsubst '$CADDY_HASHED_PASSWORD $POSTGRES_IP_ALLOWLIST' < /usr/etc/caddy/Caddyf
 
 # RuntimeDirectory creates the dir as root:root 0750; tighten to root:creds so
 # postgres (via creds membership) can traverse it but the world cannot.
-chgrp creds /run/post-startup
+chgrp creds /run/post-startup-postgresql
 
 # Postgres hash on first boot only. chgrp creds works without CAP_CHOWN because root
 # is in the creds group (set in setup.sh); postgres reads via creds membership.
 if [ ! -d /var/lib/pgsql/data/base ]; then
-    /opt/scripts/fetch_metadata.sh postgres-experiments-scram > /run/post-startup/hash
-    chgrp creds /run/post-startup/hash
-    chmod 0640 /run/post-startup/hash
+    /opt/scripts/fetch_metadata.sh postgres-experiments-scram > /run/post-startup-postgresql/hash
+    chgrp creds /run/post-startup-postgresql/hash
+    chmod 0640 /run/post-startup-postgresql/hash
 fi

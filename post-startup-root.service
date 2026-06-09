@@ -2,6 +2,7 @@
 Description=Root-side boot setup (Caddyfile, postgres hash)
 Requires=network-online.target
 After=local-fs.target network-online.target
+Before=post-startup-postgresql.service caddy.service
 
 [Service]
 Type=oneshot
@@ -9,7 +10,7 @@ User=root
 Group=creds
 ExecStart=/opt/scripts/post-startup-root.sh
 RemainAfterExit=yes
-RuntimeDirectory=post-startup
+RuntimeDirectory=post-startup-postgresql
 RuntimeDirectoryMode=0750
 
 ProtectSystem=strict

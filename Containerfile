@@ -49,12 +49,13 @@ COPY fstab                  /usr/etc/fstab
 COPY prepare-root.conf      /usr/lib/ostree/prepare-root.conf
 COPY bootc.json             /etc/bootc/bootc.json
 COPY Caddyfile              /etc/caddy/Caddyfile
+COPY journald.conf          /etc/systemd/journald.conf
 # Grouped configs
 COPY postgresql/ /usr/share/postgres/
 
 ENV PATH="/opt/scripts:${PATH}"
-COPY setup.sh post-startup-root.sh post-startup.sh bootstrap.sh fetch_metadata.sh /opt/scripts/
-COPY --chmod=0644 post-startup-root.service post-startup.service /usr/lib/systemd/system/
+COPY setup.sh post-startup-root.sh post-startup-postgresql.sh bootstrap.sh fetch_metadata.sh /opt/scripts/
+COPY --chmod=0644 post-startup-root.service post-startup-postgresql.service /usr/lib/systemd/system/
 COPY --chmod=0644 caddy.override.conf       /usr/lib/systemd/system/caddy.service.d/override.conf
 COPY --chmod=0644 postgresql.override.conf  /usr/lib/systemd/system/postgresql.service.d/override.conf
 

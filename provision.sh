@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Generates auth secrets and creates the GCP instance with them in metadata
-# at creation time. post-startup.sh and bootstrap.sh fetch them on first boot.
+# at creation time. post-startup-postgresql.sh and bootstrap.sh fetch them on first boot.
 #
 # Usage: ./provision.sh
 

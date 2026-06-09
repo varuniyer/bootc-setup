@@ -10,6 +10,6 @@ fi
 cp /usr/share/postgres/*.conf /var/lib/pgsql/data/
 chmod 0644 /var/lib/pgsql/data/*.conf
 
-if [ -f /run/post-startup/hash ]; then
+if [ -f /run/post-startup-postgresql/hash ]; then
     /opt/scripts/bootstrap.sh
 fi
