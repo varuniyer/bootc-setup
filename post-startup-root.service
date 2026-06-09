@@ -33,6 +33,7 @@ SystemCallFilter=@system-service
 SystemCallArchitectures=native
 CapabilityBoundingSet=
 ReadWritePaths=/etc/caddy/Caddyfile
+ReadOnlyPaths=-/var/lib/pgsql/data/base
 
 [Install]
 WantedBy=multi-user.target
