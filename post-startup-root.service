@@ -31,7 +31,7 @@ RestrictSUIDSGID=true
 RestrictAddressFamilies=AF_UNIX AF_INET
 SystemCallFilter=@system-service
 SystemCallArchitectures=native
-CapabilityBoundingSet=
+CapabilityBoundingSet=CAP_DAC_READ_SEARCH
 ReadWritePaths=/etc/caddy/Caddyfile
 ReadOnlyPaths=-/var/lib/pgsql/data/base
 

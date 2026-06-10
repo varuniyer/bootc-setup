@@ -15,7 +15,7 @@ Postgres and WebDAV are tailnet-only. On first boot, `post-startup-tailscale.sh`
 Tailnet clients connect with:
 
 ```bash
-psql 'postgresql://experiments:<PASSWORD>@<host>.<tailnet>.ts.net:5432/experiments?sslmode=disable'
+psql 'postgresql://experiments:<PASSWORD>@bootc.<tailnet>.ts.net:5432/experiments'
 ```
 
 WireGuard provides transport encryption and machine authentication, so no TLS is involved; the SCRAM password remains as defense in depth against other tailnet devices.
