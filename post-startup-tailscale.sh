@@ -14,9 +14,12 @@ key_file=$(mktemp)
     printf '%s' '?ephemeral=false&preauthorized=true'
 } > "$key_file"
 
+# --netfilter-mode=off keeps tailscaled away from the static nftables
+# ruleset; it's a preference, so it persists in state across reboots.
 tailscale up \
     --auth-key="file:$key_file" \
     --advertise-tags=tag:server \
+    --netfilter-mode=off \
     --accept-dns=false \
     --accept-routes=false \
     --ssh=false

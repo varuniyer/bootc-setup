@@ -7,7 +7,7 @@ After=network-pre.target systemd-resolved.service
 Type=notify
 DynamicUser=yes
 ExecStartPre=/usr/bin/tailscaled --cleanup
-ExecStart=/usr/bin/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/run/tailscale/tailscaled.sock --port=41641 --netfilter-mode=off
+ExecStart=/usr/bin/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/run/tailscale/tailscaled.sock --port=41641
 ExecStopPost=/usr/bin/tailscaled --cleanup
 Restart=on-failure
 RuntimeDirectory=tailscale
