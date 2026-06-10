@@ -11,7 +11,6 @@ ENV_FILE="${1:-$(dirname "$0")/provision.env}"
 # Plain source, not `set -a`, so secrets stay shell-local and never reach gcloud's env.
 . "$ENV_FILE"
 
-ZONE=us-central1-a
 WORK=$(mktemp -d "$HOME/tmp/provision.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT
 
