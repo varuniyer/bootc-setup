@@ -34,7 +34,8 @@ ${REDIR_LIST} {
 
 # WebDAV is tailnet-only. tailscale serve terminates HTTPS on the ts.net name
 # and proxies to this loopback listener, so Caddy serves it as plain HTTP.
-http://127.0.0.1:8080 {
+:8080 {
+	bind 127.0.0.1
 	basic_auth argon2id {
 		${WEBDAV_USERNAME} ${WEBDAV_PASSWORD_HASH}
 	}
