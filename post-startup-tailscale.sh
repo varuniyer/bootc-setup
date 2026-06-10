@@ -27,6 +27,6 @@ rm -f "$key_file"
 
 # Serve config persists in tailscaled state, so this also runs once.
 tailscale serve --bg --tcp 5432 tcp://127.0.0.1:5432
-tailscale serve --bg --https 443 http://127.0.0.1:8080
+tailscale serve --bg --tcp 8080 tcp://127.0.0.1:8080
 
 touch "$marker"

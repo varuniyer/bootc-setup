@@ -32,7 +32,7 @@ RestrictAddressFamilies=AF_UNIX AF_INET
 SystemCallFilter=@system-service
 SystemCallArchitectures=native
 CapabilityBoundingSet=CAP_DAC_READ_SEARCH
-ReadWritePaths=/etc/caddy/Caddyfile
+ReadWritePaths=/etc/caddy/Caddyfile /etc/rclone
 ReadOnlyPaths=-/var/lib/pgsql/data/base
 
 [Install]

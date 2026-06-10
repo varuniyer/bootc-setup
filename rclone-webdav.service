@@ -1,0 +1,43 @@
+[Unit]
+Description=rclone WebDAV server (tailnet-only via tailscale serve)
+Requires=post-startup-root.service
+After=post-startup-root.service
+
+[Service]
+Type=simple
+DynamicUser=yes
+StateDirectory=webdav
+StateDirectoryMode=0700
+LoadCredential=htpasswd:/etc/rclone/webdav.htpasswd
+ExecStart=/usr/bin/rclone serve webdav /var/lib/webdav \
+    --config "" \
+    --addr 127.0.0.1:8080 \
+    --htpasswd ${CREDENTIALS_DIRECTORY}/htpasswd
+Restart=on-failure
+
+ProtectHome=true
+ProtectProc=invisible
+ProtectClock=true
+ProtectKernelLogs=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectHostname=true
+PrivateDevices=true
+PrivateTmp=true
+PrivateIPC=true
+RestrictNamespaces=true
+NoNewPrivileges=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+SystemCallFilter=@system-service
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX AF_INET
+IPAddressDeny=any
+IPAddressAllow=localhost
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

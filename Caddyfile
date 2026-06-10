@@ -1,6 +1,5 @@
 {
 	email ${ACME_EMAIL}
-	order webdav before file_server
 	admin off
 }
 
@@ -30,18 +29,6 @@ ${DOMAIN} {
 
 ${REDIR_LIST} {
 	redir https://${DOMAIN} permanent
-}
-
-# WebDAV is tailnet-only. tailscale serve terminates HTTPS on the ts.net name
-# and proxies to this loopback listener, so Caddy serves it as plain HTTP.
-:8080 {
-	bind 127.0.0.1
-	basic_auth argon2id {
-		${WEBDAV_USERNAME} ${WEBDAV_PASSWORD_HASH}
-	}
-	webdav {
-		root /var/lib/webdav/data
-	}
 }
 
 mta-sts.${DOMAIN} {
