@@ -8,9 +8,12 @@ dnf install -y --setopt=install_weak_deps=False caddy postgresql17-server gettex
 dnf remove -y openssh-server
 dnf clean all
 
-# Replace stock caddy with custom build (layer4 + webdav plugins).
+# Replace stock caddy with custom build (webdav plugin).
 mv /tmp/caddy.custom /usr/bin/caddy
 restorecon /usr/bin/caddy
+
+# Tailscale binaries are COPY'd from the official image and need SELinux labels.
+restorecon /usr/bin/tailscale /usr/bin/tailscaled
 
 # ----------------------------
 # Rebuild initramfs so prepare-root.conf's [etc] transient takes effect.
@@ -41,4 +44,4 @@ usermod -aG creds postgres
 # ----------------------------
 # Services
 # ----------------------------
-systemctl enable systemd-sysctl nftables post-startup-root post-startup-postgresql caddy postgresql bootc-fetch-apply-updates.timer
+systemctl enable systemd-sysctl nftables tailscaled post-startup-root post-startup-tailscale post-startup-postgresql caddy postgresql bootc-fetch-apply-updates.timer

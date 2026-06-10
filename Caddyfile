@@ -2,29 +2,6 @@
 	email ${ACME_EMAIL}
 	order webdav before file_server
 	admin off
-
-	servers {
-		listener_wrappers {
-			layer4 {
-				@postgres {
-					tls {
-						sni db.${DOMAIN}
-						alpn postgresql
-					}
-					remote_ip ${POSTGRES_IP_ALLOWLIST}
-				}
-				route @postgres {
-					tls {
-						connection_policy {
-							alpn postgresql
-						}
-					}
-					proxy tcp/127.0.0.1:5432
-				}
-			}
-			tls
-		}
-	}
 }
 
 (security_headers) {
@@ -55,20 +32,15 @@ ${REDIR_LIST} {
 	redir https://${DOMAIN} permanent
 }
 
-dav.${DOMAIN} {
-	import security_headers
+# WebDAV is tailnet-only. tailscale serve terminates HTTPS on the ts.net name
+# and proxies to this loopback listener, so Caddy serves it as plain HTTP.
+http://127.0.0.1:8080 {
 	basic_auth argon2id {
 		${WEBDAV_USERNAME} ${WEBDAV_PASSWORD_HASH}
 	}
 	webdav {
 		root /var/lib/webdav/data
 	}
-}
-
-db.${DOMAIN} {
-	# Site exists only so Caddy provisions a cert for this SNI.
-	# Real traffic is intercepted by the layer4 route in global options.
-	respond "use postgresql protocol" 421
 }
 
 mta-sts.${DOMAIN} {

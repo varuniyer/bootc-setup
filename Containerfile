@@ -28,14 +28,20 @@ RUN find public -type f \( \
 
 
 # --------------------------------------
-# Stage 3: Caddy with layer4 + webdav plugins
+# Stage 3: Caddy with webdav plugin
 # --------------------------------------
 FROM docker.io/library/caddy:builder AS caddy-build
-RUN xcaddy build --with github.com/mholt/caddy-l4 --with github.com/mholt/caddy-webdav
+RUN xcaddy build --with github.com/mholt/caddy-webdav
 
 
 # --------------------------------------
-# Stage 4: Final bootc image
+# Stage 4: Tailscale binaries (static Go; base distro irrelevant)
+# --------------------------------------
+FROM docker.io/tailscale/tailscale:latest AS tailscale
+
+
+# --------------------------------------
+# Stage 5: Final bootc image
 # --------------------------------------
 FROM quay.io/fedora/fedora-bootc:latest
 
@@ -43,6 +49,8 @@ FROM quay.io/fedora/fedora-bootc:latest
 COPY --from=compress    /work/public      /usr/share/caddy
 # Custom caddy binary (moved into place by setup.sh)
 COPY --from=caddy-build /usr/bin/caddy    /tmp/caddy.custom
+# Tailscale binaries (relabeled by setup.sh)
+COPY --from=tailscale   /usr/local/bin/tailscale /usr/local/bin/tailscaled /usr/bin/
 
 # Standalone config files
 COPY fstab                  /usr/etc/fstab
@@ -56,8 +64,8 @@ COPY 99-synproxy.conf       /usr/lib/sysctl.d/99-synproxy.conf
 COPY postgresql/ /usr/share/postgres/
 
 ENV PATH="/opt/scripts:${PATH}"
-COPY setup.sh post-startup-root.sh post-startup-postgresql.sh bootstrap.sh fetch_metadata.sh /opt/scripts/
-COPY --chmod=0644 post-startup-root.service post-startup-postgresql.service /usr/lib/systemd/system/
+COPY setup.sh post-startup-root.sh post-startup-tailscale.sh post-startup-postgresql.sh bootstrap.sh fetch_metadata.sh /opt/scripts/
+COPY --chmod=0644 post-startup-root.service post-startup-tailscale.service post-startup-postgresql.service tailscaled.service /usr/lib/systemd/system/
 COPY --chmod=0644 caddy.override.conf       /usr/lib/systemd/system/caddy.service.d/override.conf
 COPY --chmod=0644 postgresql.override.conf  /usr/lib/systemd/system/postgresql.service.d/override.conf
 

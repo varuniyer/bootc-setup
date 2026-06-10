@@ -1,0 +1,36 @@
+[Unit]
+Description=First-boot Tailscale login and serve config
+Requires=tailscaled.service network-online.target
+After=tailscaled.service network-online.target nftables.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/scripts/post-startup-tailscale.sh
+RemainAfterExit=yes
+StateDirectory=post-startup-tailscale
+StateDirectoryMode=0700
+
+ProtectSystem=strict
+ProtectHome=true
+ProtectProc=invisible
+ProtectClock=true
+ProtectKernelLogs=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectHostname=true
+PrivateDevices=true
+PrivateTmp=true
+PrivateIPC=true
+RestrictNamespaces=true
+NoNewPrivileges=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+SystemCallFilter=@system-service
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX AF_INET
+
+[Install]
+WantedBy=multi-user.target

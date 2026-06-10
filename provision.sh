@@ -21,6 +21,9 @@ printf '%s\n' "$POSTGRES_PASSWORD" | podman run --rm -i --user postgres \
     docker.io/library/postgres:17-alpine /bin/sh /hash-pg-password/run.sh > "$WORK/pg-hash"
 printf '%s\n' "$WEBDAV_PASSWORD" | caddy hash-password --algorithm argon2id > "$WORK/dav-hash"
 
+# Tailscale OAuth client secret, used as an auth key by post-startup-tailscale.sh.
+printf '%s' "$TS_AUTHKEY" > "$WORK/ts-authkey"
+
 # MTA-STS policy body fetched once and baked into metadata.
 curl -sSf "$MTA_STS_URL" > "$WORK/mta-sts-txt"
 
@@ -28,7 +31,6 @@ curl -sSf "$MTA_STS_URL" > "$WORK/mta-sts-txt"
 printf '%s' "$ACME_EMAIL"      > "$WORK/acme-email"
 printf '%s' "$DOMAIN"          > "$WORK/domain"
 printf '%s' "$REDIR_LIST"      > "$WORK/redir-list"
-printf '%s' "$POSTGRES_IPS"    > "$WORK/pg-ips"
 printf '%s' "$WEBDAV_USERNAME" > "$WORK/dav-user"
 
 gcloud compute instances create bootc \
@@ -36,4 +38,10 @@ gcloud compute instances create bootc \
     --boot-disk-size=200GB --boot-disk-type=pd-standard --address=bootc-ip \
     --shielded-secure-boot --shielded-vtpm --shielded-integrity-monitoring \
     --no-service-account --no-scopes \
-    --metadata-from-file "acme-email=$WORK/acme-email,domain=$WORK/domain,redir-list=$WORK/redir-list,mta-sts-txt=$WORK/mta-sts-txt,postgres-ip-allowlist=$WORK/pg-ips,postgres-experiments-scram=$WORK/pg-hash,webdav-username=$WORK/dav-user,webdav-password-hash=$WORK/dav-hash"
+    --metadata-from-file "acme-email=$WORK/acme-email,domain=$WORK/domain,redir-list=$WORK/redir-list,mta-sts-txt=$WORK/mta-sts-txt,ts-authkey=$WORK/ts-authkey,postgres-experiments-scram=$WORK/pg-hash,webdav-username=$WORK/dav-user,webdav-password-hash=$WORK/dav-hash"
+
+# Direct WireGuard path for Tailscale; without it, traffic falls back to DERP
+# relays over outbound 443. Created once, shared by reprovisioned instances.
+gcloud compute firewall-rules describe allow-tailscale-wireguard >/dev/null 2>&1 || \
+    gcloud compute firewall-rules create allow-tailscale-wireguard \
+        --direction=INGRESS --allow=udp:41641

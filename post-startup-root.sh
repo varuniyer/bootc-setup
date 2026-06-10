@@ -10,8 +10,7 @@ REDIR_LIST=$($f redir-list) \
 MTA_STS_TXT=$($f mta-sts-txt) \
 WEBDAV_USERNAME=$($f webdav-username) \
 WEBDAV_PASSWORD_HASH=$($f webdav-password-hash) \
-POSTGRES_IP_ALLOWLIST=$($f postgres-ip-allowlist) \
-envsubst '$ACME_EMAIL $DOMAIN $REDIR_LIST $MTA_STS_TXT $WEBDAV_USERNAME $WEBDAV_PASSWORD_HASH $POSTGRES_IP_ALLOWLIST' < /usr/etc/caddy/Caddyfile > /etc/caddy/Caddyfile
+envsubst '$ACME_EMAIL $DOMAIN $REDIR_LIST $MTA_STS_TXT $WEBDAV_USERNAME $WEBDAV_PASSWORD_HASH' < /usr/etc/caddy/Caddyfile > /etc/caddy/Caddyfile
 
 # RuntimeDirectory creates the dir as root:root 0750; tighten to root:creds so
 # postgres (via creds membership) can traverse it but the world cannot.
