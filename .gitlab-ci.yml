@@ -1,6 +1,6 @@
 build-and-deploy:
-  image: quay.io/podman/stable:latest
-  tags: [saas-linux-small-amd64]
+  image: gcr.io/google.com/cloudsdktool/google-cloud-cli:alpine
+  tags: [saas-linux-small-arm64]
   script:
     - bash build-and-deploy.sh
   rules:

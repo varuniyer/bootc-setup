@@ -5,19 +5,7 @@ IMAGE="$CI_REGISTRY_IMAGE:latest"
 GCS_BUCKET="bootc"
 GCE_IMAGE="bootc"
 
-if ! command -v gcloud >/dev/null; then
-  tee /etc/yum.repos.d/google-cloud-sdk.repo > /dev/null << EOM
-[google-cloud-cli]
-name=Google Cloud CLI
-baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el10-x86_64
-enabled=1
-gpgcheck=1
-repo_gpgcheck=0
-gpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key-v10.gpg
-EOM
-  dnf install -y --setopt=install_weak_deps=False libxcrypt-compat google-cloud-cli
-fi
-
+apk add podman tar gzip
 podman login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
 podman build --layers=false -f Containerfile -t "$IMAGE" .
 podman push "$IMAGE"
