@@ -36,7 +36,7 @@ printf '%s' "$REDIR_LIST"      > "$WORK/redir-list"
 
 gcloud compute instances create bootc \
     --zone="$ZONE" --machine-type="$MACHINE_TYPE" --image=bootc \
-    --boot-disk-size=200GB --boot-disk-type=pd-standard --address=bootc-ip \
+    --boot-disk-size="$DISK_SIZE" --boot-disk-type="$DISK_TYPE" --address=bootc-ip \
     --shielded-secure-boot --shielded-vtpm --shielded-integrity-monitoring \
     --no-service-account --no-scopes \
     --metadata-from-file "acme-email=$WORK/acme-email,domain=$WORK/domain,redir-list=$WORK/redir-list,mta-sts-txt=$WORK/mta-sts-txt,ts-authkey=$WORK/ts-authkey,postgres-experiments-scram=$WORK/pg-hash,webdav-htpasswd=$WORK/dav-htpasswd"
