@@ -5,7 +5,7 @@ IMAGE="$CI_REGISTRY_IMAGE:latest"
 GCS_BUCKET="bootc"
 GCE_IMAGE="bootc"
 
-apk add podman tar gzip fuse-overlayfs
+apk add podman tar gzip fuse-overlayfs iptables
 podman login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
 podman build --layers=false -f Containerfile -t "$IMAGE" .
 podman push "$IMAGE"
