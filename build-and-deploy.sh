@@ -5,15 +5,15 @@ IMAGE="$CI_REGISTRY_IMAGE:latest"
 GCS_BUCKET="bootc"
 GCE_IMAGE="bootc"
 
-apt install -y --no-install-recommends podman tar gzip fuse-overlayfs
+apt install -y --no-install-recommends podman tar gzip fuse-overlayfs runc
 podman login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
 podman build --network=host --layers=false -f Containerfile -t "$IMAGE" .
 podman push "$IMAGE"
 
 mkdir -p output
 STORAGE=$(podman info --format '{{.Store.GraphRoot}}')
-podman run --rm --privileged --network=host --cgroupns=host --cgroups=disabled \
-  --pids-limit=-1 --pull=newer --security-opt label=type:unconfined_t \
+podman run --rm --runtime=runc --privileged --network=host \
+  --pull=newer --security-opt label=type:unconfined_t \
   -v "$PWD/output:/output" -v "$STORAGE:/var/lib/containers/storage" \
   quay.io/centos-bootc/bootc-image-builder:latest --type raw --use-librepo=True --rootfs ext4 "$IMAGE"
 
