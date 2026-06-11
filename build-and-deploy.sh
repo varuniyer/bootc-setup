@@ -12,7 +12,8 @@ podman push "$IMAGE"
 
 mkdir -p output
 STORAGE=$(podman info --format '{{.Store.GraphRoot}}')
-podman run --rm --privileged --network=host --cgroupns=host --pull=newer --security-opt label=type:unconfined_t \
+podman run --rm --privileged --network=host --cgroupns=host --cgroups=disabled \
+  --pids-limit=-1 --pull=newer --security-opt label=type:unconfined_t \
   -v "$PWD/output:/output" -v "$STORAGE:/var/lib/containers/storage" \
   quay.io/centos-bootc/bootc-image-builder:latest --type raw --use-librepo=True --rootfs ext4 "$IMAGE"
 
