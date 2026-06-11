@@ -35,7 +35,7 @@ printf '%s' "$DOMAIN"          > "$WORK/domain"
 printf '%s' "$REDIR_LIST"      > "$WORK/redir-list"
 
 gcloud compute instances create bootc \
-    --zone="$ZONE" --machine-type=e2-small --image=bootc \
+    --zone="$ZONE" --machine-type="$MACHINE_TYPE" --image=bootc \
     --boot-disk-size=200GB --boot-disk-type=pd-standard --address=bootc-ip \
     --shielded-secure-boot --shielded-vtpm --shielded-integrity-monitoring \
     --no-service-account --no-scopes \
