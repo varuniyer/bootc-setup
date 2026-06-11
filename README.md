@@ -42,9 +42,11 @@ Deployment values live in `provision.env`, which is gitignored because it holds 
 
 `provision.sh` pushes these into instance metadata, creates the instance, and idempotently creates the `allow-tailscale-wireguard` firewall rule (UDP 41641) for direct WireGuard paths. Without the rule, Tailscale still works through DERP relays over outbound 443. `post-startup-root.sh` renders the metadata values into `/etc/caddy/Caddyfile` and `/etc/rclone/webdav.htpasswd` on each boot.
 
+After provisioning, once `psql` connects successfully over the tailnet, remove the two single-use secrets from instance metadata: `gcloud compute instances remove-metadata bootc --keys=ts-authkey,postgres-experiments-scram`. Both are consumed on first boot only (the auth key's outcome persists in tailscaled state, the SCRAM verifier in the Postgres catalog), so removing them does not affect reboots. Do not remove them before a successful Postgres login, since a failed first boot recovers by re-fetching them. The remaining metadata values are re-read on every boot and must stay.
+
 ## Reprovisioning
 
-To rebuild the instance from scratch: delete the VM, run `provision.sh` again, and **delete the old machine in the Tailscale admin console**. A recreated VM registers as a new node (e.g. `bootc-1`) while the dead node keeps the MagicDNS name, which leaves clients connecting to a black-holed address. Removing the stale machine lets the name reattach to the live node. The OAuth client secret in `provision.env` does not expire, so no other credentials need refreshing.
+To rebuild the instance from scratch: delete the VM, run `provision.sh` again, and **delete the old machine in the Tailscale admin console**. A recreated VM registers as a new node (e.g. `bootc-1`) while the dead node keeps the MagicDNS name, which leaves clients connecting to a black-holed address. Removing the stale machine lets the name reattach to the live node. The OAuth client secret in `provision.env` does not expire, so no other credentials need refreshing. Reprovisioning pushes the single-use secrets back into metadata, so repeat the post-provision `remove-metadata` step once the new instance is verified.
 
 ## Hardening
 
