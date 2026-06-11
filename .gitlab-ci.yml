@@ -1,5 +1,5 @@
 build-and-deploy:
-  image: gcr.io/google.com/cloudsdktool/google-cloud-cli:alpine
+  image: gcr.io/google.com/cloudsdktool/google-cloud-cli:slim
   tags: [saas-linux-small-arm64]
   script:
     - bash build-and-deploy.sh
