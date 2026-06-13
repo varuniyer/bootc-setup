@@ -1,44 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Reads all deployment values from an env file (default: provision.env, override
-# with $1), hashes the passwords locally, and creates the GCP instance with the
-# results in metadata. post-startup-root.sh and bootstrap.sh fetch them on boot.
+# Reads all deployment values from .env, hashes the passwords locally,
+# and creates the GCP instance with the results in metadata.
+# post-startup-root.sh and bootstrap.sh fetch them on boot.
 #
-# Usage: ./provision.sh [env-file]
-
-ENV_FILE="${1:-$(dirname "$0")/provision.env}"
-# Plain source, not `set -a`, so secrets stay shell-local and never reach gcloud's env.
-. "$ENV_FILE"
-
-WORK=$(mktemp -d "$HOME/tmp/provision.XXXXXX")
-trap 'rm -rf "$WORK"' EXIT
+# Usage: dotenvx run -- ./provision.sh
 
 # Passwords flow through stdin so they never hit argv or disk. The hashers strip
 # the trailing newline, so the printf newline is not part of the hashed secret.
-printf '%s\n' "$POSTGRES_PASSWORD" | podman run --rm -i --user postgres \
+hash=$(printf '%s\n' "$POSTGRES_PASSWORD" | podman run --rm -i --user postgres \
     -v "$PWD/hash-pg-password:/hash-pg-password:Z,ro" \
-    docker.io/library/postgres:17-alpine /bin/sh /hash-pg-password/run.sh > "$WORK/pg-hash"
-printf '%s' "$WEBDAV_PASSWORD" | podman run --rm -i docker.io/library/alpine:latest \
+    docker.io/library/postgres:17-alpine /bin/sh /hash-pg-password/run.sh)
+htpasswd=$(printf '%s' "$WEBDAV_PASSWORD" | podman run --rm -i docker.io/library/alpine:latest \
     sh -c 'apk add -q --no-cache apache2-utils >&2 && htpasswd -niB "$1"' \
-    hash "$WEBDAV_USERNAME" > "$WORK/dav-htpasswd"
-
-# Tailscale OAuth client secret, used as an auth key by post-startup-tailscale.sh.
-printf '%s' "$TS_AUTHKEY" > "$WORK/ts-authkey"
+    hash "$WEBDAV_USERNAME")
 
 # MTA-STS policy body fetched once and baked into metadata.
-curl -sSf "$MTA_STS_URL" > "$WORK/mta-sts-txt"
-
-# Non-secret values go through files too so commas in REDIR_LIST survive --metadata.
-printf '%s' "$ACME_EMAIL"      > "$WORK/acme-email"
-printf '%s' "$DOMAIN"          > "$WORK/domain"
-printf '%s' "$REDIR_LIST"      > "$WORK/redir-list"
+mtasts=$(curl -sSf "$MTA_STS_URL")
 
 gcloud compute instances create bootc \
     --zone="$ZONE" --machine-type="$MACHINE_TYPE" --image=bootc \
     --boot-disk-size="$DISK_SIZE" --boot-disk-type="$DISK_TYPE" --address=bootc-ip \
     --shielded-secure-boot --shielded-vtpm --no-service-account --no-scopes \
-    --metadata-from-file "acme-email=$WORK/acme-email,domain=$WORK/domain,redir-list=$WORK/redir-list,mta-sts-txt=$WORK/mta-sts-txt,ts-authkey=$WORK/ts-authkey,postgres-experiments-scram=$WORK/pg-hash,webdav-htpasswd=$WORK/dav-htpasswd"
+    --metadata "^|^acme-email=$ACME_EMAIL|domain=$DOMAIN|redir-list=$REDIR_LIST|mta-sts-txt=$mtasts|ts-authkey=$TS_AUTHKEY|postgres-experiments-scram=$hash|webdav-htpasswd=$htpasswd"
 
 # Direct WireGuard path for Tailscale; without it, traffic falls back to DERP
 # relays over outbound 443. Created once, shared by reprovisioned instances.

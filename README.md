@@ -23,7 +23,7 @@ Postgres:
 psql 'postgresql://experiments:<PASSWORD>@bootc.<tailnet>.ts.net:5432/experiments'
 ```
 
-WebDAV, e.g. with rclone (`type = webdav`, `vendor = rclone`, plus the `WEBDAV_*` credentials from `provision.env`, entered via `rclone config` so the password is stored obscured):
+WebDAV, e.g. with rclone (`type = webdav`, `vendor = rclone`, plus the `WEBDAV_*` credentials from `.env`, entered via `rclone config` so the password is stored obscured):
 
 ```bash
 rclone ls dav:   # url = http://bootc.<tailnet>.ts.net:8080
@@ -31,7 +31,7 @@ rclone ls dav:   # url = http://bootc.<tailnet>.ts.net:8080
 
 ## Configuration
 
-Deployment values live in `provision.env`, which is gitignored because it holds plaintext secrets. Copy `provision.env.example` to `provision.env` and fill it in before running `provision.sh`:
+Copy `.env.example` to `.env`, fill it in locally, then immediately run `dotenvx encrypt`. Do not commit `.env` until it contains encrypted values, and never commit `.env.keys`. Then, run `dotenvx run -- ./provision.sh`:
 
 - `DOMAIN`: the primary domain Caddy serves. It replaces `${DOMAIN}` throughout the Caddyfile, so the image itself carries no domain.
 - `ACME_EMAIL`: the email Caddy registers with the ACME CA.
@@ -46,13 +46,13 @@ After provisioning, once `psql` connects successfully over the tailnet, remove t
 
 ## Reprovisioning
 
-To rebuild the instance from scratch: delete the VM, run `provision.sh` again, and **delete the old machine in the Tailscale admin console**. A recreated VM registers as a new node (e.g. `bootc-1`) while the dead node keeps the MagicDNS name, which leaves clients connecting to a black-holed address. Removing the stale machine lets the name reattach to the live node. The OAuth client secret in `provision.env` does not expire, so no other credentials need refreshing. Reprovisioning pushes the single-use secrets back into metadata, so repeat the post-provision `remove-metadata` step once the new instance is verified.
+To rebuild the instance from scratch: delete the VM, run `dotenvx run -- ./provision.sh` again, and **delete the old machine in the Tailscale admin console**. A recreated VM registers as a new node (e.g. `bootc-1`) while the dead node keeps the MagicDNS name, which leaves clients connecting to a black-holed address. Removing the stale machine lets the name reattach to the live node. The OAuth client secret in `.env` does not expire, so no other credentials need refreshing. Reprovisioning pushes the single-use secrets back into metadata, so repeat the post-provision `remove-metadata` step once the new instance is verified.
 
 ## Hardening
 
 The host has no SSH server and no GCP service account. nftables loads a static default-drop ruleset for both input and output. Inbound traffic is limited to the web ports, the Tailscale tunnel interface, and WireGuard UDP. Outbound traffic is limited to DNS, NTP, HTTP(S), and Tailscale's WireGuard and STUN ports. The GCE metadata service is reachable by root only. tailscaled runs with `--netfilter-mode=off` (persisted in its state) so it never modifies the ruleset.
 
-Every service, including the oneshot boot-setup units, runs under a systemd sandbox: `ProtectSystem=strict` with explicit writable paths, private devices/tmp/IPC, kernel and hostname protections, `MemoryDenyWriteExecute`, `SystemCallFilter=@system-service` on the native architecture, restricted address families, and an empty or minimal capability bounding set. Deviations are deliberate and per-service. Caddy keeps `CAP_NET_BIND_SERVICE` for port 443. tailscaled runs as a `DynamicUser` with only `CAP_NET_ADMIN`, a `DeviceAllow` for `/dev/net/tun`, and `AF_NETLINK` for interface and route programming. The rclone WebDAV server runs as a `DynamicUser` with no capabilities at all, owns its data through its `StateDirectory`, and is pinned to loopback in both directions with `IPAddressAllow=localhost`. The root-side boot unit keeps just enough capability to perform its read-only first-boot probe of the postgres data directory. Secrets are staged through a root/postgres-bridging `creds` group and a runtime directory that is deleted after first boot. The WebDAV htpasswd is rendered root-only (0600) into `/etc/rclone` each boot and delivered to the service through systemd `LoadCredential`, and all secrets flow through stdin and files rather than argv or the environment.
+Every service, including the oneshot boot-setup units, runs under a systemd sandbox: `ProtectSystem=strict` with explicit writable paths, private devices/tmp/IPC, kernel and hostname protections, `MemoryDenyWriteExecute`, `SystemCallFilter=@system-service` on the native architecture, restricted address families, and an empty or minimal capability bounding set. Deviations are deliberate and per-service. Caddy keeps `CAP_NET_BIND_SERVICE` for port 443. tailscaled runs as a `DynamicUser` with only `CAP_NET_ADMIN`, a `DeviceAllow` for `/dev/net/tun`, and `AF_NETLINK` for interface and route programming. The rclone WebDAV server runs as a `DynamicUser` with no capabilities at all, owns its data through its `StateDirectory`, and is pinned to loopback in both directions with `IPAddressAllow=localhost`. The root-side boot unit keeps just enough capability to perform its read-only first-boot probe of the postgres data directory. Secrets are staged through a root/postgres-bridging `creds` group and a runtime directory that is deleted after first boot. The WebDAV htpasswd is rendered root-only (0600) into `/etc/rclone` each boot and delivered to the service through systemd `LoadCredential`.
 
 ## Layout
 
@@ -66,8 +66,8 @@ Every service, including the oneshot boot-setup units, runs under a systemd sand
 - `bootstrap.sh`: applies the first-boot SQL from `/usr/share/postgres/bootstrap.sql`, setting the `experiments` role password from the staged SCRAM verifier.
 - `Caddyfile`, `prepare-root.conf`, `bootc.json`, `nftables.conf`: standalone configs copied to their target paths. `Caddyfile` is a template whose metadata-backed variables (`acme-email`, `domain`, `redir-list`, `mta-sts-txt`) are rendered by `post-startup-root.sh`.
 - `hash-pg-password/`: containerized SCRAM-SHA-256 hasher used by `provision.sh` so the Postgres password is hashed without a local Postgres install.
-- `provision.sh`: reads all deployment values from `provision.env`, hashes the Postgres and WebDAV passwords locally, and creates the GCP instance with the hashes and the remaining values in instance metadata.
-- `provision.env.example`: template for the gitignored `provision.env` that `provision.sh` reads.
+- `provision.sh`: hashes the Postgres and WebDAV passwords locally, and creates the GCP instance with the hashes and the remaining values in instance metadata.
+- `.env.example`: template for `.env`. After filling it in, run `dotenvx encrypt` and only commit the encrypted `.env`. `.env.keys` is gitignored and must remain private.
 - `postgresql/`: `postgresql.conf`, `pg_hba.conf` (copied into `/var/lib/pgsql/data/` each boot by `post-startup-postgresql.sh`), and `bootstrap.sql` (role+db creation SQL run once on first boot by `bootstrap.sh`).
 - `website/`: static site sources (Hugo).
 - `build-and-deploy.sh` and `.gitlab-ci.yml`: CI for image push and GCP image build.
