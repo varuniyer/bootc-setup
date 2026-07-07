@@ -23,6 +23,7 @@ Install [dotenvx](https://github.com/dotenvx/dotenvx#quickstart---), then copy t
 cp .env.example .env
 ```
 Fill in the values in `.env`:
+- `ZONE`, `MACHINE_TYPE`, `DISK_SIZE`, `DISK_TYPE`: GCP zone, instance type, and boot disk shape passed to `gcloud compute instances create`.
 - `DOMAIN`: Primary domain Caddy serves (replaces `${DOMAIN}` in the Caddyfile).
 - `ACME_EMAIL`: Email for ACME CA registration.
 - `REDIR_LIST`: Comma-separated addresses that permanently redirect to `https://${DOMAIN}`.
@@ -48,7 +49,7 @@ After provisioning, verify that you can connect to PostgreSQL over the tailnet. 
 ```bash
 gcloud compute instances remove-metadata bootc --keys=ts-authkey,postgres-experiments-scram
 ```
-These secrets are only consumed on the very first boot. Removing them does not affect reboots, but do not remove them until a successful login verifies that the first boot succeeded. The remaining metadata values are re-read on every boot and must stay.
+These secrets are only consumed on the very first boot. Removing them does not affect reboots, but do not remove them until the PostgreSQL connection check above confirms that the first boot succeeded. The remaining metadata values are re-read on every boot and must stay.
 
 ## Access
 
@@ -100,11 +101,13 @@ The host minimizes attack surface via strict networking and systemd sandboxing r
 - `post-startup-tailscale.{sh,service}`: First-boot tailnet login and port forwarding configuration.
 - `post-startup-postgresql.{sh,service}`: PostgreSQL-side boot setup (initdb, config refresh).
 - `bootstrap.sh`: Applies first-boot SQL to establish roles and databases.
+- `fetch_metadata.sh`: Helper the boot scripts use to read GCE instance metadata attributes.
 - `tailscaled.service`: Custom systemd unit for the statically copied `tailscaled` binary.
 - `rclone-webdav.service`: Sandboxed WebDAV server running `rclone serve`.
 
 ### Configuration
-- `Caddyfile`, `prepare-root.conf`, `bootc.json`, `nftables.conf`: Standalone configuration files. `Caddyfile` acts as a template rendered by `post-startup-root.sh`.
+- `Caddyfile`, `prepare-root.conf`, `bootc.json`, `nftables.conf`, `fstab`, `journald.conf`, `99-synproxy.conf`: Standalone configuration files. `Caddyfile` acts as a template rendered by `post-startup-root.sh`.
+- `caddy.override.conf`, `postgresql.override.conf`: Systemd sandbox drop-ins for the distribution-packaged Caddy and PostgreSQL services.
 - `postgresql/`: Contains `postgresql.conf`, `pg_hba.conf`, and `bootstrap.sql`.
 - `hash-pg-password/`: Containerized SCRAM-SHA-256 hasher to generate secure PostgreSQL password hashes locally without a host installation.
 - `website/`: Static site source files (Hugo).
