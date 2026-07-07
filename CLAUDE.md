@@ -20,7 +20,7 @@
 
 ## Git
 
-- Commit when asked, but never `git push`. Pushing needs a Yubikey tap, so the user pushes manually.
+- When asked to commit, commit and then push main to both remotes (github and origin).
 - Run `git log -1` before any `git commit --amend`. The user makes commits between turns, so HEAD may not be the commit you expect.
 - Remove tracked files with `git rm`, not plain `rm`.
 - When one "commit" instruction covers several changes from the conversation, write one combined commit instead of per-subsystem splits.
