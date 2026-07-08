@@ -32,6 +32,6 @@
 ## Operating the running VM
 
 - Nothing ever logs into the VM. There is no sshd, no serial getty login, and no user password. Never propose running commands on the VM, including live /etc edits. Every fix lands by committing to the repo and letting the image update path apply it.
-- Inspect runtime state through the read-only serial log: `fish -c "gcloud compute instances get-serial-port-output bootc"`. Don't rebuild the image locally to answer questions about deployed state.
+- Inspect runtime state through the read-only serial log: `gcloud compute instances get-serial-port-output bootc`. Don't rebuild the image locally to answer questions about deployed state.
 - To pick up an update or recover from bad state, reboot the whole VM with `gcloud compute instances reset bootc` instead of reasoning about individual services.
-- PostgreSQL and WebDAV are tailnet-only. Query postgres with `fish -ic "psql ..."` and no connection params, since the interactive fish environment sets PGHOST and friends. Exercise WebDAV with `fish -c "rclone <op> webdav:..."`, since the local rclone remote has the URL and credentials.
+- PostgreSQL and WebDAV are tailnet-only. Query postgres with `psql` and exercise WebDAV with `rclone <op> webdav:...`.
