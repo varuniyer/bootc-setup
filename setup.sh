@@ -28,6 +28,11 @@ rmdir /var/roothome
 # The `creds` group bridges root and postgres: root can chgrp to a group it's in
 # without the cap, postgres reads files in the group via membership.
 # ----------------------------
+# CI checks out the repo with umask 0000, so COPY'd files arrive world-writable.
+# The base image also ships group-writable files. Strip write bits from both.
+find /usr /etc /opt \( -type f -o -type d \) -perm /022 -exec chmod go-w {} +
+
+chown -R root:root /usr/share/website
 chown root:caddy /etc/caddy/Caddyfile
 chmod 0640 /etc/caddy/Caddyfile
 

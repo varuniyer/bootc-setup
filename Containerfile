@@ -39,7 +39,7 @@ FROM docker.io/tailscale/tailscale:latest AS tailscale
 FROM quay.io/fedora/fedora-bootc:latest
 
 # Static site
-COPY --from=compress    /work/public      /usr/share/caddy
+COPY --from=compress    /work/public      /usr/share/website
 # Tailscale binaries (relabeled by setup.sh)
 COPY --from=tailscale   /usr/local/bin/tailscale /usr/local/bin/tailscaled /usr/bin/
 
@@ -56,9 +56,9 @@ COPY postgresql/ /usr/share/postgres/
 
 ENV PATH="/opt/scripts:${PATH}"
 COPY setup.sh post-startup-root.sh post-startup-tailscale.sh post-startup-postgresql.sh bootstrap.sh fetch_metadata.sh /opt/scripts/
-COPY --chmod=0644 post-startup-root.service post-startup-tailscale.service post-startup-postgresql.service rclone-webdav.service tailscaled.service /usr/lib/systemd/system/
-COPY --chmod=0644 caddy.override.conf       /usr/lib/systemd/system/caddy.service.d/override.conf
-COPY --chmod=0644 postgresql.override.conf  /usr/lib/systemd/system/postgresql.service.d/override.conf
+COPY post-startup-root.service post-startup-tailscale.service post-startup-postgresql.service rclone-webdav.service tailscaled.service /usr/lib/systemd/system/
+COPY caddy.override.conf       /usr/lib/systemd/system/caddy.service.d/override.conf
+COPY postgresql.override.conf  /usr/lib/systemd/system/postgresql.service.d/override.conf
 
 # Single build-time mutation layer
 RUN chmod +x /opt/scripts/* && setup.sh
