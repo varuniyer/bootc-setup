@@ -17,9 +17,7 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: google-github-actions/setup-gcloud@v2
+      - uses: actions/checkout@v7
 
       - name: Build and deploy
         run: sudo -E PATH="$PATH" bash build-and-deploy.sh
