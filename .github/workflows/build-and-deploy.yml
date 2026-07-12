@@ -24,11 +24,6 @@ jobs:
       - name: Verify native overlay storage
         run: sudo podman info --format '{{.Store.GraphDriverName}}'
 
-      - name: Write GCP service account key
-        run: printf '%s' "$GCP_SA_KEY_JSON" > "$RUNNER_TEMP/gcp-key.json"
-        env:
-          GCP_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY_JSON }}
-
       - name: Build and deploy
         run: sudo -E PATH="$PATH" bash build-and-deploy.sh
         env:
@@ -36,5 +31,5 @@ jobs:
           CI_REGISTRY_IMAGE: ghcr.io/${{ github.repository }}
           CI_REGISTRY_USER: ${{ github.actor }}
           CI_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-          GCP_SA_KEY: ${{ runner.temp }}/gcp-key.json
-          CLOUDSDK_CORE_PROJECT: ${{ vars.GCP_PROJECT }}
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          CLOUDSDK_CORE_PROJECT: ${{ secrets.CLOUDSDK_CORE_PROJECT }}
