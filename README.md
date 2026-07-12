@@ -10,7 +10,7 @@ Filesystem layout follows the conventions described in the [Fedora bootc documen
 
 - **Stateless Configuration**: `/etc` is configured as transient via `prepare-root.conf`. All runtime configurations are re-rendered from `/usr/etc` templates and instance metadata on every boot. Persistent state lives exclusively under `/var`.
 - **Base Image**: `Containerfile` builds upon `quay.io/fedora/fedora-bootc:latest`. A separate stage copies static `tailscale` and `tailscaled` binaries from the official Tailscale image. `setup.sh` handles package installation and service enablement.
-- **Continuous Integration**: GitLab CI periodically builds the image with Podman, pushes it to the container registry, and rebuilds a GCP disk image to serve as a recovery seed.
+- **Continuous Integration**: A GitHub Actions workflow builds the image with Podman, pushes it to `ghcr.io`, and rebuilds a GCP disk image to serve as a recovery seed. A Cloud Scheduler job dispatches the workflow daily so package updates ship even without commits.
 - **Automatic Updates**: The running VM updates itself directly from the container registry via the `bootc-fetch-apply-updates` systemd timer. The GCP image is only used for disaster recovery or initial VM creation.
 
 ## Deployment & Configuration
@@ -29,6 +29,7 @@ Fill in the values in `.env`:
 - `REDIR_LIST`: Comma-separated addresses that permanently redirect to `https://${DOMAIN}`.
 - `MTA_STS_URL`: URL where `provision.sh` fetches the MTA-STS policy body.
 - `TS_AUTHKEY`: Tailscale OAuth client secret (scoped to `auth_keys` write on `tag:server`).
+- `GH_WORKFLOW_TOKEN`: Fine-grained GitHub PAT with Actions read/write on this repository only. Cloud Scheduler uses it to dispatch the daily build workflow.
 - `POSTGRES_PASSWORD`, `WEBDAV_USERNAME`, `WEBDAV_PASSWORD`: Plaintext credentials. `provision.sh` hashes these locally so only secure hashes reach instance metadata.
 
 Once filled, encrypt the file:
@@ -42,7 +43,7 @@ Run the provisioning script using `dotenvx`:
 ```bash
 dotenvx run -- ./provision.sh
 ```
-This script pushes configuration into instance metadata, creates the VM, and idempotently creates the `allow-tailscale-wireguard` firewall rule (UDP 41641) for direct WireGuard paths. On boot, `post-startup-root.sh` renders the metadata values into `/etc/caddy/Caddyfile` and `/etc/rclone/webdav.htpasswd`.
+This script pushes configuration into instance metadata, creates the VM, and idempotently creates the `allow-tailscale-wireguard` firewall rule (UDP 41641) for direct WireGuard paths and the `bootc-build` Cloud Scheduler job that dispatches the daily image build. On boot, `post-startup-root.sh` renders the metadata values into `/etc/caddy/Caddyfile` and `/etc/rclone/webdav.htpasswd`.
 
 ### 3. Clean Up Single-Use Secrets
 After provisioning, verify that you can connect to PostgreSQL over the tailnet. Once verified, remove the single-use secrets from instance metadata:
@@ -93,7 +94,7 @@ The host minimizes attack surface via strict networking and systemd sandboxing r
 - `Containerfile`: Multi-stage build definition.
 - `setup.sh`: Build-time mutations (package installation, permissions, service enablement).
 - `provision.sh`: Hashes passwords locally and creates the GCP instance.
-- `build-and-deploy.sh` / `.gitlab-ci.yml`: CI pipelines for building and pushing the image.
+- `build-and-deploy.sh` / `.github/workflows/build-and-deploy.yml`: CI pipeline for building and pushing the image.
 - `.env.example`: Template for environment variables.
 
 ### Boot Setup Scripts & Services

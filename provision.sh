@@ -30,3 +30,16 @@ gcloud compute instances create bootc \
 gcloud compute firewall-rules describe allow-tailscale-wireguard >/dev/null 2>&1 || \
     gcloud compute firewall-rules create allow-tailscale-wireguard \
         --direction=INGRESS --allow=udp:41641
+
+# Daily image rebuild picks up package updates. Cloud Scheduler guarantees the
+# trigger with retries. GitHub's own cron is best-effort, so it is not used.
+gcloud scheduler jobs describe bootc-build --location="${ZONE%-*}" >/dev/null 2>&1 || \
+    gcloud scheduler jobs create http bootc-build \
+        --location="${ZONE%-*}" \
+        --schedule='23 9 * * *' \
+        --uri=https://api.github.com/repos/varuniyer/bootc-setup/actions/workflows/build-and-deploy.yml/dispatches \
+        --http-method=post \
+        --headers="Authorization=Bearer $GH_WORKFLOW_TOKEN,Accept=application/vnd.github+json" \
+        --message-body='{"ref":"main"}' \
+        --max-retry-attempts=5 \
+        --attempt-deadline=120s

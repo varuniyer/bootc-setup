@@ -1,0 +1,40 @@
+name: build-and-deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+concurrency:
+  group: build-and-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify native overlay storage
+        run: sudo podman info --format '{{.Store.GraphDriverName}}'
+
+      - name: Write GCP service account key
+        run: printf '%s' "$GCP_SA_KEY_JSON" > "$RUNNER_TEMP/gcp-key.json"
+        env:
+          GCP_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY_JSON }}
+
+      - name: Build and deploy
+        run: sudo -E PATH="$PATH" bash build-and-deploy.sh
+        env:
+          CI_REGISTRY: ghcr.io
+          CI_REGISTRY_IMAGE: ghcr.io/${{ github.repository }}
+          CI_REGISTRY_USER: ${{ github.actor }}
+          CI_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          GCP_SA_KEY: ${{ runner.temp }}/gcp-key.json
+          CLOUDSDK_CORE_PROJECT: ${{ vars.GCP_PROJECT }}

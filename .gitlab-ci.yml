@@ -1,7 +1,0 @@
-build-and-deploy:
-  image: gcr.io/google.com/cloudsdktool/google-cloud-cli:slim
-  tags: [saas-linux-small-arm64]
-  script:
-    - bash build-and-deploy.sh
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
