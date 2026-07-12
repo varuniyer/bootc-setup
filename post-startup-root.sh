@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Caddyfile rendered from the /usr/etc template; `>` truncates /etc/caddy/Caddyfile
-# in place, preserving the build-time root:caddy 0640 owner/mode.
-f=/opt/scripts/fetch_metadata.sh \
-ACME_EMAIL=$($f acme-email) \
-DOMAIN=$($f domain) \
-REDIR_LIST=$($f redir-list) \
-MTA_STS_TXT=$($f mta-sts-txt) \
-envsubst '$ACME_EMAIL $DOMAIN $REDIR_LIST $MTA_STS_TXT' < /usr/etc/caddy/Caddyfile > /etc/caddy/Caddyfile
+# Caddy fills the Caddyfile's {$VAR} placeholders from this env file at parse.
+f=/opt/scripts/fetch_metadata.sh
+printf '%s\n' \
+    "ACME_EMAIL=$($f acme-email)" \
+    "DOMAIN=$($f domain)" \
+    "REDIR_LIST=\"$($f redir-list)\"" > /run/caddy/env
+
+mkdir -p /run/caddy/mta-sts/.well-known
+$f mta-sts-txt > /run/caddy/mta-sts/.well-known/mta-sts.txt
 
 # RuntimeDirectory creates the dir as root:root 0750; tighten to root:creds so
 # postgres (via creds membership) can traverse it but the world cannot.

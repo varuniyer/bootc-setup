@@ -6,9 +6,7 @@ After=network-pre.target systemd-resolved.service
 [Service]
 Type=notify
 DynamicUser=yes
-ExecStartPre=/usr/bin/tailscaled --cleanup
-ExecStart=/usr/bin/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/run/tailscale/tailscaled.sock --port=41641
-ExecStopPost=/usr/bin/tailscaled --cleanup
+ExecStart=/usr/bin/tailscaled --tun=userspace-networking --state=/var/lib/tailscale/tailscaled.state --socket=/run/tailscale/tailscaled.sock --port=41641
 Restart=on-failure
 RuntimeDirectory=tailscale
 RuntimeDirectoryMode=0755
@@ -33,11 +31,9 @@ RestrictSUIDSGID=true
 RestrictRealtime=true
 SystemCallFilter=@system-service
 SystemCallArchitectures=native
-DevicePolicy=closed
-DeviceAllow=/dev/net/tun rw
+PrivateDevices=true
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
-AmbientCapabilities=CAP_NET_ADMIN
-CapabilityBoundingSet=CAP_NET_ADMIN
+CapabilityBoundingSet=
 
 [Install]
 WantedBy=multi-user.target

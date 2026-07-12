@@ -1,15 +1,11 @@
-# --------------------------------------
 # Stage 1: Hugo build
-# --------------------------------------
 FROM ghcr.io/gohugoio/hugo:latest AS hugo
 WORKDIR /src
 COPY --chown=hugo:hugo website/ .
 RUN mkdir -p public && hugo build --minify
 
 
-# --------------------------------------
 # Stage 2: Compression
-# --------------------------------------
 FROM docker.io/library/alpine:latest AS compress
 
 RUN apk add --no-cache gzip brotli findutils
@@ -27,38 +23,38 @@ RUN find public -type f \( \
     -exec brotli --best --keep {} \;
 
 
-# --------------------------------------
-# Stage 3: Tailscale binaries (static Go; base distro irrelevant)
-# --------------------------------------
-FROM docker.io/tailscale/tailscale:latest AS tailscale
+# Stage 3: PostgreSQL source build
+FROM quay.io/fedora/fedora-bootc:latest AS pgbuild
+COPY postgresql/build.sh /build.sh
+RUN bash /build.sh
 
 
-# --------------------------------------
 # Stage 4: Final bootc image
-# --------------------------------------
 FROM quay.io/fedora/fedora-bootc:latest
 
 # Static site
-COPY --from=compress    /work/public      /usr/share/website
-# Tailscale binaries (relabeled by setup.sh)
-COPY --from=tailscale   /usr/local/bin/tailscale /usr/local/bin/tailscaled /usr/bin/
+COPY --from=compress /work/public /usr/share/website
+# Binaries from official images (relabeled by setup.sh)
+COPY --from=docker.io/tailscale/tailscale:latest /usr/local/bin/tailscale /usr/local/bin/tailscaled /usr/bin/
+COPY --from=docker.io/library/caddy:latest       /usr/bin/caddy           /usr/bin/caddy
+COPY --from=docker.io/rclone/rclone:latest       /usr/local/bin/rclone    /usr/bin/rclone
+COPY --from=pgbuild                              /build/usr               /usr
 
-# Standalone config files
+# Config files
 COPY fstab                  /usr/etc/fstab
 COPY prepare-root.conf      /usr/lib/ostree/prepare-root.conf
 COPY bootc.json             /etc/bootc/bootc.json
-COPY Caddyfile              /etc/caddy/Caddyfile
+COPY caddy/Caddyfile        /etc/caddy/Caddyfile
 COPY journald.conf          /etc/systemd/journald.conf
 COPY nftables.conf          /etc/sysconfig/nftables.conf
 COPY 99-synproxy.conf       /usr/lib/sysctl.d/99-synproxy.conf
-# Grouped configs
-COPY postgresql/ /usr/share/postgres/
+COPY postgresql/tmpfiles.conf /usr/lib/tmpfiles.d/postgres.conf
+COPY caddy/tmpfiles.conf    /usr/lib/tmpfiles.d/caddy.conf
+COPY postgresql/postgresql.conf postgresql/pg_hba.conf postgresql/bootstrap.sql /usr/share/postgres/
 
 ENV PATH="/opt/scripts:${PATH}"
-COPY setup.sh post-startup-root.sh post-startup-tailscale.sh post-startup-postgresql.sh bootstrap.sh fetch_metadata.sh /opt/scripts/
-COPY post-startup-root.service post-startup-tailscale.service post-startup-postgresql.service rclone-webdav.service tailscaled.service /usr/lib/systemd/system/
-COPY caddy.override.conf       /usr/lib/systemd/system/caddy.service.d/override.conf
-COPY postgresql.override.conf  /usr/lib/systemd/system/postgresql.service.d/override.conf
+COPY setup.sh post-startup-root.sh fetch_metadata.sh tailscale/post-startup-tailscale.sh postgresql/post-startup-postgresql.sh postgresql/bootstrap.sh /opt/scripts/
+COPY post-startup-root.service rclone-webdav.service tailscale/post-startup-tailscale.service tailscale/tailscaled.service postgresql/post-startup-postgresql.service postgresql/postgresql.service caddy/caddy.service /usr/lib/systemd/system/
 
 # Single build-time mutation layer
 RUN chmod +x /opt/scripts/* && setup.sh

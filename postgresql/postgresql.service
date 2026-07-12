@@ -1,16 +1,15 @@
 [Unit]
-Description=Postgres-side boot setup (initdb, configs, bootstrap)
-Requires=post-startup-root.service
-After=post-startup-root.service
-Before=postgresql.service
+Description=PostgreSQL database server
+Requires=post-startup-postgresql.service
+After=network.target post-startup-postgresql.service
 
 [Service]
-Type=oneshot
+Type=notify
 User=postgres
 Group=postgres
-ExecStart=/opt/scripts/post-startup-postgresql.sh
-ExecStartPost=+/usr/bin/rm -f /run/post-startup-postgresql/hash
-RemainAfterExit=yes
+ExecStart=/usr/bin/postgres -D /var/lib/pgsql/data
+KillSignal=SIGINT
+TimeoutStopSec=120
 
 ProtectSystem=strict
 ProtectHome=true
@@ -18,6 +17,8 @@ ProtectProc=invisible
 ProtectClock=true
 ProtectKernelLogs=true
 ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
 ProtectHostname=true
 PrivateDevices=true
 PrivateTmp=true
@@ -27,12 +28,14 @@ NoNewPrivileges=true
 LockPersonality=true
 MemoryDenyWriteExecute=true
 RestrictSUIDSGID=true
+RestrictRealtime=true
 RestrictAddressFamilies=AF_UNIX AF_INET
 SystemCallFilter=@system-service
 SystemCallArchitectures=native
 CapabilityBoundingSet=
+IPAddressDeny=any
+IPAddressAllow=localhost
 ReadWritePaths=/var/lib/pgsql /run/postgresql
-ReadOnlyPaths=/run/post-startup-postgresql
 
 [Install]
 WantedBy=multi-user.target

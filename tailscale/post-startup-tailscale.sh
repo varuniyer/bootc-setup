@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# First boot only. Marker lives in this unit's own StateDirectory because
-# /var/lib/tailscale is 0700 under tailscaled's DynamicUser and this unit
-# drops CAP_DAC_OVERRIDE.
+# First boot only. The marker needs its own StateDirectory because this unit
+# drops CAP_DAC_OVERRIDE and /var/lib/tailscale is 0700 to tailscaled's DynamicUser.
 marker=/var/lib/post-startup-tailscale/provisioned
 [ -f "$marker" ] && exit 0
 
@@ -14,12 +13,9 @@ key_file=$(mktemp)
     printf '%s' '?ephemeral=false&preauthorized=true'
 } > "$key_file"
 
-# --netfilter-mode=off keeps tailscaled away from the static nftables
-# ruleset; it's a preference, so it persists in state across reboots.
 tailscale up \
     --auth-key="file:$key_file" \
     --advertise-tags=tag:server \
-    --netfilter-mode=off \
     --accept-dns=false \
     --accept-routes=false \
     --ssh=false

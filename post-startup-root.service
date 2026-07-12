@@ -1,5 +1,5 @@
 [Unit]
-Description=Root-side boot setup (Caddyfile, postgres hash)
+Description=Root-side boot setup (caddy env, postgres hash)
 Requires=network-online.target
 After=local-fs.target network-online.target nftables.service
 Before=post-startup-postgresql.service caddy.service
@@ -32,7 +32,7 @@ RestrictAddressFamilies=AF_UNIX AF_INET
 SystemCallFilter=@system-service
 SystemCallArchitectures=native
 CapabilityBoundingSet=CAP_DAC_READ_SEARCH
-ReadWritePaths=/etc/caddy/Caddyfile /etc/rclone
+ReadWritePaths=/run/caddy /etc/rclone
 ReadOnlyPaths=-/var/lib/pgsql/data/base
 
 [Install]

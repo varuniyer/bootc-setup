@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Reads all deployment values from .env, hashes the passwords locally,
-# and creates the GCP instance with the results in metadata.
-# post-startup-root.sh and bootstrap.sh fetch them on boot.
-#
-# Usage: dotenvx run -- ./provision.sh
+# Hashes the .env passwords locally and creates the GCP instance with the
+# results in metadata. Usage: dotenvx run -- ./provision.sh
 
 # Passwords flow through stdin so they never hit argv or disk. The hashers strip
 # the trailing newline, so the printf newline is not part of the hashed secret.

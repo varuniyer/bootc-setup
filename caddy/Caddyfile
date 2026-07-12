@@ -1,5 +1,5 @@
 {
-	email ${ACME_EMAIL}
+	email {$ACME_EMAIL}
 	admin off
 }
 
@@ -13,7 +13,7 @@
 	}
 }
 
-${DOMAIN} {
+{$DOMAIN} {
 	import security_headers
 
 	root * /usr/share/website
@@ -27,13 +27,13 @@ ${DOMAIN} {
 	}
 }
 
-${REDIR_LIST} {
-	redir https://${DOMAIN} permanent
+{$REDIR_LIST} {
+	redir https://{$DOMAIN} permanent
 }
 
-mta-sts.${DOMAIN} {
+mta-sts.{$DOMAIN} {
 	import security_headers
+	root * /run/caddy/mta-sts
 	@mta-sts path /.well-known/mta-sts.txt
-	respond @mta-sts `${MTA_STS_TXT}` 200
-	header @mta-sts Content-Type "text/plain; charset=utf-8"
+	file_server @mta-sts
 }

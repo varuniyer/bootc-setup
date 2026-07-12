@@ -1,8 +1,17 @@
 [Unit]
+Description=Postgres-side boot setup (initdb, configs, bootstrap)
 Requires=post-startup-root.service
 After=post-startup-root.service
+Before=postgresql.service
 
 [Service]
+Type=oneshot
+User=postgres
+Group=postgres
+ExecStart=/opt/scripts/post-startup-postgresql.sh
+ExecStartPost=+/usr/bin/rm -f /run/post-startup-postgresql/hash
+RemainAfterExit=yes
+
 ProtectSystem=strict
 ProtectHome=true
 ProtectProc=invisible
@@ -10,6 +19,7 @@ ProtectClock=true
 ProtectKernelLogs=true
 ProtectKernelTunables=true
 ProtectKernelModules=true
+ProtectControlGroups=true
 ProtectHostname=true
 PrivateDevices=true
 PrivateTmp=true
@@ -21,8 +31,13 @@ MemoryDenyWriteExecute=true
 RestrictSUIDSGID=true
 RestrictRealtime=true
 RestrictAddressFamilies=AF_UNIX AF_INET
+IPAddressDeny=any
+IPAddressAllow=localhost
 SystemCallFilter=@system-service
 SystemCallArchitectures=native
-CapabilityBoundingSet=CAP_NET_BIND_SERVICE
-ReadWritePaths=/var/lib/caddy
-UMask=0077
+CapabilityBoundingSet=
+ReadWritePaths=/var/lib/pgsql /run/postgresql
+ReadOnlyPaths=/run/post-startup-postgresql
+
+[Install]
+WantedBy=multi-user.target
