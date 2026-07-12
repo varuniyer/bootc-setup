@@ -12,7 +12,6 @@ Environment=XDG_DATA_HOME=/var/lib
 Environment=XDG_CONFIG_HOME=/etc
 EnvironmentFile=/run/caddy/env
 ExecStart=/usr/bin/caddy run --environ --config /etc/caddy/Caddyfile
-ExecReload=/usr/bin/caddy reload --config /etc/caddy/Caddyfile --force
 TimeoutStopSec=5s
 LimitNOFILE=1048576
 AmbientCapabilities=CAP_NET_BIND_SERVICE

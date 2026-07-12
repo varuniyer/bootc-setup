@@ -47,7 +47,6 @@ COPY bootc.json             /etc/bootc/bootc.json
 COPY caddy/Caddyfile        /etc/caddy/Caddyfile
 COPY journald.conf          /etc/systemd/journald.conf
 COPY nftables.conf          /etc/sysconfig/nftables.conf
-COPY 99-synproxy.conf       /usr/lib/sysctl.d/99-synproxy.conf
 COPY postgresql/tmpfiles.conf /usr/lib/tmpfiles.d/postgres.conf
 COPY caddy/tmpfiles.conf    /usr/lib/tmpfiles.d/caddy.conf
 COPY postgresql/postgresql.conf postgresql/pg_hba.conf postgresql/bootstrap.sql /usr/share/postgres/

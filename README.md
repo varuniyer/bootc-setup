@@ -108,6 +108,6 @@ The host minimizes attack surface via strict networking and systemd sandboxing r
 - `tailscale/`: `tailscaled.service` for the statically copied binary and first-boot tailnet setup (`post-startup-tailscale.{sh,service}`).
 
 ### Configuration
-- `prepare-root.conf`, `bootc.json`, `nftables.conf`, `fstab`, `journald.conf`, `99-synproxy.conf`: Standalone configuration files.
+- `prepare-root.conf`, `bootc.json`, `nftables.conf`, `fstab`, `journald.conf`: Standalone configuration files.
 - `hash-pg-password/`: Containerized SCRAM-SHA-256 hasher to generate secure PostgreSQL password hashes locally without a host installation.
 - `website/`: Static site source files (Hugo).

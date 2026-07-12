@@ -42,4 +42,4 @@ groupadd -r creds
 usermod -aG creds root
 usermod -aG creds postgres
 
-systemctl enable systemd-sysctl nftables tailscaled post-startup-root post-startup-tailscale post-startup-postgresql rclone-webdav caddy postgresql bootc-fetch-apply-updates.timer
+systemctl enable nftables tailscaled post-startup-root post-startup-tailscale post-startup-postgresql rclone-webdav caddy postgresql bootc-fetch-apply-updates.timer
