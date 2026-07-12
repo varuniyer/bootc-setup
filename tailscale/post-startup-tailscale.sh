@@ -15,6 +15,7 @@ key_file=$(mktemp)
 
 tailscale up \
     --auth-key="file:$key_file" \
+    --hostname=bootc \
     --advertise-tags=tag:server \
     --accept-dns=false \
     --accept-routes=false \
