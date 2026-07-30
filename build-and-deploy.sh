@@ -10,12 +10,13 @@ curl -sSf https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-clou
 PATH="/opt/google-cloud-sdk/bin:$PATH"
 
 podman login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
-podman build --layers=false -f Containerfile -t "$IMAGE" .
+# Runner image 20260726 pairs podman 5.8 with a stale /usr/bin/crun (actions/runner-images#14473).
+podman build --runtime "$(command -v crun)" --layers=false -f Containerfile -t "$IMAGE" .
 podman push "$IMAGE"
 
 mkdir -p output
 STORAGE=$(podman info --format '{{.Store.GraphRoot}}')
-podman run --rm --privileged --pull=newer \
+podman run --runtime "$(command -v crun)" --rm --privileged --pull=newer \
   -v "$PWD/output:/output" -v "$STORAGE:/var/lib/containers/storage" \
   quay.io/centos-bootc/bootc-image-builder:latest --type raw --use-librepo=True --rootfs ext4 "$IMAGE"
 
