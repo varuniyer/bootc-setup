@@ -6,7 +6,7 @@ GCS_BUCKET="bootc"
 GCE_IMAGE="bootc"
 
 # The runner ships no gcloud. Extract outside the build context to keep it lean.
-curl -sSf https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-arm.tar.gz | tar -xz -C /opt
+curl -sSf --retry 3 --retry-all-errors https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-arm.tar.gz | tar -xz -C /opt
 PATH="/opt/google-cloud-sdk/bin:$PATH"
 
 podman login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
