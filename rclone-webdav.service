@@ -1,5 +1,5 @@
 [Unit]
-Description=rclone WebDAV server (tailnet-only via tailscale serve)
+Description=rclone WebDAV server (tailnet-only, TLS terminated by tailscale serve)
 Requires=post-startup-root.service
 After=post-startup-root.service
 

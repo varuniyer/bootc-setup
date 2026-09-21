@@ -1,5 +1,5 @@
 [Unit]
-Description=First-boot Tailscale login and serve config
+Description=First-boot Tailscale login and per-boot serve config
 Requires=tailscaled.service network-online.target
 After=tailscaled.service network-online.target nftables.service
 
@@ -7,6 +7,7 @@ After=tailscaled.service network-online.target nftables.service
 Type=oneshot
 ExecStart=/opt/scripts/post-startup-tailscale.sh
 RemainAfterExit=yes
+TimeoutStartSec=300
 StateDirectory=post-startup-tailscale
 StateDirectoryMode=0700
 

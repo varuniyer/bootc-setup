@@ -56,7 +56,7 @@ These secrets are only consumed on the very first boot. Removing them does not a
 
 PostgreSQL and WebDAV are reachable exclusively over the tailnet.
 
-On first boot, `post-startup-tailscale.sh` logs the node in and configures `tailscale serve`. Tailnet TCP 5432 forwards to local PostgreSQL, and tailnet TCP 8080 forwards to a loopback rclone WebDAV server. Access control is managed in your Tailscale admin console policy file: clients may reach `tag:server` on TCP 5432 and 8080 only.
+On first boot, `post-startup-tailscale.sh` logs the node in. On every boot, it resets the `tailscale serve` config to match the script. Tailnet TCP 5432 forwards to local PostgreSQL, and tailnet HTTPS 8080 proxies to a loopback rclone WebDAV server. Access control is managed in your Tailscale admin console policy file: clients may reach `tag:server` on TCP 5432 and 8080 only.
 
 **PostgreSQL**:
 ```bash
@@ -64,9 +64,9 @@ psql 'postgresql://experiments:<PASSWORD>@bootc.<tailnet>.ts.net:5432/experiment
 ```
 
 **WebDAV**:
-WebDAV is served as plain HTTP because WireGuard already provides transport encryption and per-device authentication, eliminating the need for TLS on the tailnet path. Configure `rclone` (`type = webdav`, `vendor = rclone`) using the credentials from `.env`, then access it via:
+WebDAV is served over HTTPS under the node's MagicDNS name, which requires HTTPS certificates to be enabled for the tailnet. `tailscaled` terminates TLS, obtains the Let's Encrypt certificate on the first request, renews it automatically, and caches it under `/var/lib/tailscale`, so the certificate survives reboots and image updates. Configure `rclone` (`type = webdav`, `vendor = rclone`) using the credentials from `.env`, then access it via:
 ```bash
-rclone ls dav:   # url = http://bootc.<tailnet>.ts.net:8080
+rclone ls dav:   # url = https://bootc.<tailnet>.ts.net:8080
 ```
 
 ## Reprovisioning
@@ -105,7 +105,7 @@ The host minimizes attack surface via strict networking and systemd sandboxing r
 ### Service Folders
 - `caddy/`: `Caddyfile` (static, with `{$VAR}` placeholders Caddy fills from `/run/caddy/env`), the sandboxed `caddy.service` for the statically copied binary, and `tmpfiles.conf`.
 - `postgresql/`: Server configs (`postgresql.conf`, `pg_hba.conf`), `build.sh` (the source build that runs in its own Containerfile stage), the sandboxed `postgresql.service`, boot setup (`post-startup-postgresql.{sh,service}`, `bootstrap.sh`, `bootstrap.sql`), and `tmpfiles.conf`.
-- `tailscale/`: `tailscaled.service` for the statically copied binary and first-boot tailnet setup (`post-startup-tailscale.{sh,service}`).
+- `tailscale/`: `tailscaled.service` for the statically copied binary and tailnet login and serve setup (`post-startup-tailscale.{sh,service}`).
 
 ### Configuration
 - `prepare-root.conf`, `bootc.json`, `nftables.conf`, `fstab`, `journald.conf`: Standalone configuration files.
