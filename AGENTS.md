@@ -1,15 +1,8 @@
 # CLAUDE.md
 
-## Prose and writing
-
-- Never use em dashes, semicolons, "rather than", or "did not" in any prose (paper text, replies, commit messages). Split into sentences or reword.
-- Documentation describes the current protocol directly. Delete descriptions of superseded intermediate states instead of narrating the history.
-- Write README and other doc prose as complete sentences with explicit subjects. Bullet list items are exempt.
-- Skip filler qualifiers like "ad-hoc", "various", and "miscellaneous".
-- Cap shell script header comments at 2 lines. State only the non-obvious why.
-
 ## Shell style
 
+- Cap shell script header comments at 2 lines.
 - Keep commands compact, 1-2 lines. Don't split into one-flag-per-line backslash continuations. Exception: resource creation commands like `gcloud compute instances create`, where one flag per line reads clearer.
 
 ## Image structure
