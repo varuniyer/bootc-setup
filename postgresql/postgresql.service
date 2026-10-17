@@ -9,6 +9,7 @@ User=postgres
 Group=postgres
 ExecStart=/usr/bin/postgres -D /var/lib/pgsql/data
 KillSignal=SIGINT
+TimeoutStartSec=infinity
 TimeoutStopSec=120
 
 ProtectSystem=strict
