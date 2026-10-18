@@ -1,3 +1,12 @@
+- key: iyer-caragea-2026-bloop
+  title: "BLooP: Zero-Shot Abstractive Summarization Using Large Language Models with Bigram Lookahead Promotion"
+  authors:
+    - "Varun Iyer"
+    - "Cornelia Caragea"
+  booktitle: "Proceedings of the Fifteenth Language Resources and Evaluation Conference"
+  year: 2026
+  url: "https://aclanthology.org/2026.lrec-1.482/"
+
 - key: huang-etal-2023-paraamr
   title: "ParaAMR: A Large-Scale Syntactically Diverse Paraphrase Dataset by AMR Back-Translation"
   authors:
