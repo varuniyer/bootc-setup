@@ -49,6 +49,7 @@ COPY journald.conf          /etc/systemd/journald.conf
 COPY nftables.conf          /etc/sysconfig/nftables.conf
 COPY postgresql/tmpfiles.conf /usr/lib/tmpfiles.d/postgres.conf
 COPY caddy/tmpfiles.conf    /usr/lib/tmpfiles.d/caddy.conf
+COPY caddy/caddy_local.cil  /usr/share/selinux/packages/caddy_local.cil
 COPY postgresql/postgresql.conf postgresql/pg_hba.conf postgresql/bootstrap.sql /usr/share/postgres/
 
 ENV PATH="/opt/scripts:${PATH}"

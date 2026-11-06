@@ -8,6 +8,9 @@ rm -rf /etc/ssh
 # COPY'd binaries need SELinux labels.
 restorecon -R /usr/bin /usr/lib64
 
+# Caddy runs confined as httpd_t and needs outbound 80/443 for ACME.
+semodule -n -i /usr/share/selinux/packages/caddy_local.cil
+
 # Users for the services shipped outside RPM. uid/gid 26 matches the Fedora
 # postgres package so existing /var/lib/pgsql data stays readable.
 groupadd -r caddy

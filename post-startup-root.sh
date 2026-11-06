@@ -10,6 +10,8 @@ printf '%s\n' \
 
 mkdir -p /run/caddy/mta-sts/.well-known
 $f mta-sts-txt > /run/caddy/mta-sts/.well-known/mta-sts.txt
+# Files under /run inherit var_run_t, which httpd_t (Caddy) cannot read.
+chcon -R -t httpd_sys_content_t /run/caddy/mta-sts
 
 # RuntimeDirectory creates the dir as root:root 0750; tighten to root:creds so
 # postgres (via creds membership) can traverse it but the world cannot.

@@ -85,7 +85,7 @@ The host minimizes attack surface via strict networking and systemd sandboxing r
 
 - **Network**: No SSH server, client, or host keys in the image. `nftables` loads a static default-drop ruleset. Inbound traffic is restricted to web ports and WireGuard UDP. Outbound is limited to DNS, NTP, HTTP(S), and Tailscale ports. Only root can reach the GCE metadata service. `tailscaled` runs in userspace networking mode, so no tunnel interface exists and it never alters host rules.
 - **Systemd Sandboxing**: Every service, including oneshot boot units, runs under a strict systemd sandbox: `ProtectSystem=strict`, private devices/tmp/IPC, `MemoryDenyWriteExecute`, `SystemCallFilter=@system-service`, restricted address families, and minimal capability bounding sets.
-- **Least Privilege**: Deviations from the sandbox are deliberate. Caddy retains `CAP_NET_BIND_SERVICE`. `tailscaled` and the WebDAV server run completely unprivileged as `DynamicUser` services with empty capability sets.
+- **Least Privilege**: Deviations from the sandbox are deliberate. Caddy retains `CAP_NET_BIND_SERVICE` and runs confined as SELinux `httpd_t`, with a local module (`caddy_local.cil`) allowing only outbound HTTP(S) for ACME. `tailscaled` and the WebDAV server run completely unprivileged as `DynamicUser` services with empty capability sets.
 - **Secret Handling**: Secrets are staged through a `creds` group bridging root and postgres. The WebDAV `htpasswd` is rendered root-only and delivered via systemd `LoadCredential`.
 
 ## Repository Layout
@@ -103,7 +103,7 @@ The host minimizes attack surface via strict networking and systemd sandboxing r
 - `rclone-webdav.service`: Sandboxed WebDAV server running `rclone serve`.
 
 ### Service Folders
-- `caddy/`: `Caddyfile` (static, with `{$VAR}` placeholders Caddy fills from `/run/caddy/env`), the sandboxed `caddy.service` for the statically copied binary, and `tmpfiles.conf`.
+- `caddy/`: `Caddyfile` (static, with `{$VAR}` placeholders Caddy fills from `/run/caddy/env`), the sandboxed `caddy.service` for the statically copied binary, `caddy_local.cil` (SELinux allow rule for ACME), and `tmpfiles.conf`.
 - `postgresql/`: Server configs (`postgresql.conf`, `pg_hba.conf`), `build.sh` (the source build that runs in its own Containerfile stage), the sandboxed `postgresql.service`, boot setup (`post-startup-postgresql.{sh,service}`, `bootstrap.sh`, `bootstrap.sql`), and `tmpfiles.conf`.
 - `tailscale/`: `tailscaled.service` for the statically copied binary and tailnet login and serve setup (`post-startup-tailscale.{sh,service}`).
 
