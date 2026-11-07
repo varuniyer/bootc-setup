@@ -4,6 +4,8 @@ set -euo pipefail
 # Nothing ever logs into the VM, so it ships without SSH or host keys.
 dnf remove -y openssh-server openssh-clients
 rm -rf /etc/ssh
+# No mDNS or NFS either. nftables already drops their traffic.
+dnf remove -y avahi avahi-libs nfs-utils gssproxy rpcbind
 
 # COPY'd binaries need SELinux labels.
 restorecon -R /usr/bin /usr/lib64
