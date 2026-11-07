@@ -4,8 +4,11 @@ set -euo pipefail
 # Nothing ever logs into the VM, so it ships without SSH or host keys.
 dnf remove -y openssh-server openssh-clients
 rm -rf /etc/ssh
-# No mDNS or NFS either. nftables already drops their traffic.
-dnf remove -y avahi avahi-libs nfs-utils gssproxy rpcbind
+# Nor mDNS, NFS, or a KMS console on tty1. Nothing here uses them.
+dnf remove -y avahi avahi-libs nfs-utils gssproxy rpcbind kmscon
+# systemd-getty-generator adds a login prompt on the kernel's serial console.
+# Masking the template drops it; the serial log stays readable.
+systemctl mask serial-getty@.service
 
 # COPY'd binaries need SELinux labels.
 restorecon -R /usr/bin /usr/lib64
