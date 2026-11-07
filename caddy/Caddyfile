@@ -1,6 +1,7 @@
 {
 	email {$ACME_EMAIL}
 	admin off
+	persist_config off
 }
 
 (security_headers) {
