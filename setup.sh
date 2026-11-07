@@ -20,6 +20,12 @@ useradd -r -u 26 -g postgres -d /var/lib/pgsql -s /usr/sbin/nologin postgres
 
 mkdir /etc/rclone
 
+# tmpfiles can't touch the read-only /usr or / at boot. rpm-ostree still wants
+# a real /usr/local/sbin dir, and systemd's `z / 555` can't take: layer tars
+# carry no entry for /, so the deployed root stays 0755.
+mkdir /usr/local/sbin
+ln -s /dev/null /etc/tmpfiles.d/root.conf
+
 # Rebuild initramfs so prepare-root.conf's [etc] transient takes effect.
 # /root is a symlink to /var/roothome; materialize it for dracut-install,
 # then remove so the image's /var stays empty.
