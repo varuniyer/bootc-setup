@@ -23,7 +23,7 @@ useradd -r -g caddy -d /var/lib/caddy -s /usr/sbin/nologin caddy
 groupadd -r -g 26 postgres
 useradd -r -u 26 -g postgres -d /var/lib/pgsql -s /usr/sbin/nologin postgres
 
-mkdir /etc/rclone
+mkdir /etc/rclone /etc/pki/containers
 
 # tmpfiles can't touch the read-only /usr or / at boot. rpm-ostree still wants
 # a real /usr/local/sbin dir, and systemd's `z / 555` can't take: layer tars

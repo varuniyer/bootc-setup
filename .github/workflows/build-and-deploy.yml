@@ -12,12 +12,18 @@ concurrency:
 permissions:
   contents: read
   packages: write
+  id-token: write
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v7
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
       - name: Build and deploy
         run: sudo -E PATH="$PATH" bash build-and-deploy.sh
@@ -26,5 +32,5 @@ jobs:
           CI_REGISTRY_IMAGE: ghcr.io/${{ github.repository }}
           CI_REGISTRY_USER: ${{ github.actor }}
           CI_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-          CLOUDSDK_CORE_PROJECT: ${{ secrets.CLOUDSDK_CORE_PROJECT }}
+          SIGSTORE_PRIVATE_KEY: ${{ secrets.SIGSTORE_PRIVATE_KEY }}
+          SIGSTORE_PASSPHRASE: ${{ secrets.SIGSTORE_PASSPHRASE }}

@@ -12,7 +12,9 @@ PATH="/opt/google-cloud-sdk/bin:$PATH"
 podman login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
 # Runner image 20260726 pairs podman 5.8 with a stale /usr/bin/crun (actions/runner-images#14473).
 podman build --runtime "$(command -v crun)" --layers=false -f Containerfile -t "$IMAGE" .
-podman push "$IMAGE"
+# Signatures go to the registry as sigstore attachments, where the VM looks for them.
+mkdir -p /etc/containers/registries.d && cp containers/bootc-setup.yaml /etc/containers/registries.d/
+podman push --sign-by-sigstore-private-key <(printf '%s' "$SIGSTORE_PRIVATE_KEY") --sign-passphrase-file <(printf '%s' "$SIGSTORE_PASSPHRASE") "$IMAGE"
 
 mkdir -p output
 STORAGE=$(podman info --format '{{.Store.GraphRoot}}')
@@ -22,7 +24,6 @@ podman run --runtime "$(command -v crun)" --rm --privileged --pull=newer \
 
 tar --format=oldgnu -Sczf output/bootc.tar.gz -C output/image disk.raw
 
-gcloud auth activate-service-account --key-file=<(printf '%s' "$GCP_SA_KEY")
 gcloud storage cp output/bootc.tar.gz "gs://$GCS_BUCKET/$GCE_IMAGE.tar.gz"
 gcloud compute images delete "$GCE_IMAGE" --quiet || true
 gcloud compute images create "$GCE_IMAGE" --source-uri="gs://$GCS_BUCKET/$GCE_IMAGE.tar.gz" --guest-os-features=UEFI_COMPATIBLE,GVNIC

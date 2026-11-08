@@ -19,6 +19,9 @@ chgrp creds /run/post-startup-postgresql
 
 ( umask 077; /opt/scripts/fetch_metadata.sh webdav-htpasswd > /etc/rclone/webdav.htpasswd )
 
+# containers/policy.json accepts image updates only when signed by this key.
+$f sigstore-public-key > /etc/pki/containers/sigstore.pub
+
 # Postgres hash on first boot only. chgrp creds works without CAP_CHOWN because root
 # is in the creds group (set in setup.sh); postgres reads via creds membership.
 if [ ! -d /var/lib/pgsql/data/base ]; then

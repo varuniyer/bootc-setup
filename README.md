@@ -12,13 +12,14 @@ Filesystem layout follows the conventions described in the [Fedora bootc documen
 - **Base Image**: `Containerfile` builds upon `quay.io/fedora/fedora-bootc:latest`. The final stage copies `tailscale`, `tailscaled`, `caddy`, `rclone`, and `envsubst` from their official images, and a dedicated stage builds PostgreSQL from source against the same base. No service is installed through dnf. `setup.sh` removes SSH and handles users, permissions, and service enablement.
 - **Continuous Integration**: A GitHub Actions workflow builds the image with Podman, pushes it to `ghcr.io`, and rebuilds a GCP disk image to serve as a recovery seed. A Cloud Scheduler job dispatches the workflow daily so package updates ship even without commits.
 - **Automatic Updates**: The running VM updates itself directly from the container registry via the `bootc-fetch-apply-updates` systemd timer. The GCP image is only used for disaster recovery or initial VM creation.
+- **Signed Images**: CI signs each pushed image with a sigstore key. `containers/policy.json` makes the VM accept an update only when its signature verifies against the public key from instance metadata.
 
 ## Deployment & Configuration
 
 Configuration is managed via `dotenvx` and pushed to GCE instance metadata during provisioning.
 
 ### 1. Prepare Credentials
-Install [dotenvx](https://github.com/dotenvx/dotenvx#quickstart---), then copy the environment template:
+Install [dotenvx](https://github.com/dotenvx/dotenvx#quickstart---), Podman, the gcloud CLI, and the [GitHub CLI](https://cli.github.com/). Run `gh auth login` as an account that can manage this repository's Actions secrets and variables, and `gcloud auth login` as a project owner. Then copy the environment template:
 ```bash
 cp .env.example .env
 ```
@@ -43,7 +44,7 @@ Run the provisioning script using `dotenvx`:
 ```bash
 dotenvx run -- ./provision.sh
 ```
-This script pushes configuration into instance metadata, creates the VM, and idempotently creates the `allow-tailscale-wireguard` firewall rule (UDP 41641) for direct WireGuard paths and the `bootc-build` Cloud Scheduler job that dispatches the daily image build. On boot, `post-startup-root.sh` writes the metadata values to `/run/caddy` for Caddy's native `{$VAR}` substitution and renders `/etc/rclone/webdav.htpasswd`.
+This script pushes configuration into instance metadata, creates the VM, and idempotently creates the `allow-tailscale-wireguard` firewall rule (UDP 41641) for direct WireGuard paths and the `bootc-build` Cloud Scheduler job that dispatches the daily image build. It also gives CI access to GCP without a stored key. GitHub Actions runs on `main` act as the `bootc-ci` service account through Workload Identity Federation, and that account can only write the `bootc` bucket and GCE images. On its first run, the script also creates the image signing key pair. The private key and its passphrase become Actions secrets, the public key becomes the `SIGSTORE_PUBLIC_KEY` Actions variable, and a signed build starts. On a fresh project, the script waits for that build's seed image before creating the VM. Later runs reuse the key. To rotate it, delete that variable before reprovisioning. On boot, `post-startup-root.sh` writes the metadata values to `/run/caddy` for Caddy's native `{$VAR}` substitution, renders `/etc/rclone/webdav.htpasswd`, and writes the signing public key to `/etc/pki/containers/sigstore.pub`.
 
 ### 3. Clean Up Single-Use Secrets
 After provisioning, verify that you can connect to PostgreSQL over the tailnet. Once verified, remove the single-use secrets from instance metadata:
@@ -93,7 +94,7 @@ The host minimizes attack surface via strict networking and systemd sandboxing r
 ### Build & Provisioning
 - `Containerfile`: Multi-stage build definition.
 - `setup.sh`: Build-time mutations (SSH, mDNS, NFS, and console login removal, users, permissions, service enablement).
-- `provision.sh`: Hashes passwords locally and creates the GCP instance.
+- `provision.sh`: Hashes passwords locally, sets up CI's GCP access and the signing key, and creates the GCP instance.
 - `build-and-deploy.sh` / `.github/workflows/build-and-deploy.yml`: CI pipeline for building and pushing the image.
 - `.env.example`: Template for environment variables.
 
@@ -109,5 +110,6 @@ The host minimizes attack surface via strict networking and systemd sandboxing r
 
 ### Configuration
 - `prepare-root.conf`, `bootc.json`, `nftables.conf`, `fstab`, `journald.conf`: Standalone configuration files.
+- `containers/`: `policy.json`, which requires a valid signature on this repository's image, and `bootc-setup.yaml`, which stores and reads those signatures as sigstore attachments in the registry.
 - `hash-pg-password/`: Containerized SCRAM-SHA-256 hasher to generate secure PostgreSQL password hashes locally without a host installation.
 - `website/`: Static site source files (Hugo).

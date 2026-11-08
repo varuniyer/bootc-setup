@@ -1,0 +1,10 @@
+{
+    "default": [{"type": "insecureAcceptAnything"}],
+    "transports": {
+        "docker": {
+            "ghcr.io/varuniyer/bootc-setup": [
+                {"type": "sigstoreSigned", "keyPath": "/etc/pki/containers/sigstore.pub"}
+            ]
+        }
+    }
+}
