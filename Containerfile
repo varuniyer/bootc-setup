@@ -47,12 +47,12 @@ COPY bootc.json             /etc/bootc/bootc.json
 COPY caddy/Caddyfile        /etc/caddy/Caddyfile
 COPY journald.conf          /etc/systemd/journald.conf
 COPY nftables.conf          /etc/sysconfig/nftables.conf
-COPY postgresql/tmpfiles.conf /usr/lib/tmpfiles.d/postgres.conf
+COPY postgresql/tmpfiles.conf /usr/lib/tmpfiles.d/postgresql.conf
 COPY caddy/tmpfiles.conf    /usr/lib/tmpfiles.d/caddy.conf
 COPY caddy/caddy_local.cil  /usr/share/selinux/packages/caddy_local.cil
 COPY containers/policy.json /etc/containers/policy.json
 COPY containers/bootc-setup.yaml /etc/containers/registries.d/bootc-setup.yaml
-COPY postgresql/postgresql.conf postgresql/pg_hba.conf postgresql/bootstrap.sql /usr/share/postgres/
+COPY postgresql/postgresql.conf postgresql/pg_hba.conf postgresql/bootstrap.sql /usr/share/postgresql-setup/
 
 ENV PATH="/opt/scripts:${PATH}"
 COPY setup.sh post-startup-root.sh fetch_metadata.sh tailscale/post-startup-tailscale.sh postgresql/post-startup-postgresql.sh postgresql/bootstrap.sh /opt/scripts/

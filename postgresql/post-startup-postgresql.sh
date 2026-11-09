@@ -7,7 +7,7 @@ if [ ! -d /var/lib/pgsql/data/base ]; then
     initdb -D /var/lib/pgsql/data
 fi
 
-cp /usr/share/postgres/*.conf /var/lib/pgsql/data/
+cp /usr/share/postgresql-setup/*.conf /var/lib/pgsql/data/
 chmod 0644 /var/lib/pgsql/data/*.conf
 
 if [ -f /run/post-startup-postgresql/hash ]; then
