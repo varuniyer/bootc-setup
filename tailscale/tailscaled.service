@@ -1,7 +1,8 @@
 [Unit]
 Description=Tailscale node agent
-Wants=network-pre.target
-After=network-pre.target systemd-resolved.service
+# Before DHCP finishes, resolved has no upstream DNS and tailscaled's first dials fail.
+Wants=network-online.target
+After=network-online.target systemd-resolved.service
 
 [Service]
 Type=notify
