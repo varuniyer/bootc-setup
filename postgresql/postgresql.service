@@ -25,6 +25,7 @@ PrivateDevices=true
 PrivateTmp=true
 PrivateIPC=true
 RestrictNamespaces=true
+NoNewPrivileges=true
 LockPersonality=true
 MemoryDenyWriteExecute=true
 RestrictSUIDSGID=true
