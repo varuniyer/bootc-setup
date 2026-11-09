@@ -2,7 +2,6 @@
 
 ## Shell style
 
-- Cap shell script header comments at 2 lines.
 - Keep commands compact, 1-2 lines. Don't split into one-flag-per-line backslash continuations. Exception: resource creation commands like `gcloud compute instances create`, where one flag per line reads clearer.
 
 ## Image structure
