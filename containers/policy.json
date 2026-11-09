@@ -5,6 +5,9 @@
             "ghcr.io/varuniyer/bootc-setup": [
                 {"type": "sigstoreSigned", "keyPath": "/etc/pki/containers/sigstore.pub"}
             ]
+        },
+        "containers-storage": {
+            "": [{"type": "insecureAcceptAnything"}]
         }
     }
 }
