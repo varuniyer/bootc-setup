@@ -110,6 +110,6 @@ The host minimizes attack surface via strict networking and systemd sandboxing r
 
 ### Configuration
 - `prepare-root.conf`, `bootc.json`, `nftables.conf`, `fstab`, `journald.conf`: Standalone configuration files.
-- `containers/`: `policy.json`, which requires a valid signature on this repository's image, and `bootc-setup.yaml`, which stores and reads those signatures as sigstore attachments in the registry.
+- `containers/`: `policy.json`, which requires a valid signature on this repository's image, `bootc-setup.yaml`, which stores and reads those signatures as sigstore attachments in the registry, and `sigpolicy.toml`, which makes `bootc install` record the image as `ostree-image-signed`.
 - `hash-pg-password/`: Containerized SCRAM-SHA-256 hasher to generate secure PostgreSQL password hashes locally without a host installation.
 - `website/`: Static site source files (Hugo).

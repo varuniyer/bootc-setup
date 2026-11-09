@@ -1,0 +1,4 @@
+# bootc install records the image as ostree-image-signed, so updates also
+# refuse a policy.json whose default is insecureAcceptAnything.
+[install]
+enforce-container-sigpolicy = true
