@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} — {{ site.Title }}{{ end }}</title>
-  <meta name="description" content="{{ site.Params.description }}">
+  <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} | {{ site.Title }}{{ end }}</title>
+  <meta name="description" content="NLP researcher">
   {{ $style := resources.Get "css/main.css" | minify | fingerprint }}
   <link rel="stylesheet" href="{{ $style.RelPermalink }}" integrity="{{ $style.Data.Integrity }}">
   {{ $email := resources.Get "js/email.js" | minify | fingerprint }}
@@ -14,6 +14,6 @@
 </head>
 <body>
   {{ partial "header.html" . }}
-  {{ block "main" . }}{{ end }}
+  <main class="main-content">{{ block "main" . }}{{ end }}</main>
 </body>
 </html>

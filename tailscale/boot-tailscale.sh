@@ -3,22 +3,17 @@ set -euo pipefail
 
 # Login is first boot only. The marker needs its own StateDirectory because this unit
 # drops CAP_DAC_OVERRIDE and /var/lib/tailscale is 0700 to tailscaled's DynamicUser.
-marker=/var/lib/post-startup-tailscale/provisioned
+marker=/var/lib/boot-tailscale/logged-in
 if [ ! -f "$marker" ]; then
-    # Auth key flows through a file (private /tmp) so it stays out of argv.
+    # The OAuth client secret flows through a file (private /tmp) so it stays out of argv.
     key_file=$(mktemp)
     {
-        /opt/scripts/fetch_metadata.sh ts-authkey
+        /opt/scripts/fetch_metadata.sh ts-oauth-secret
         printf '%s' '?ephemeral=false&preauthorized=true'
     } > "$key_file"
 
-    tailscale up \
-        --auth-key="file:$key_file" \
-        --hostname=bootc \
-        --advertise-tags=tag:server \
-        --accept-dns=false \
-        --accept-routes=false \
-        --ssh=false
+    tailscale up --auth-key="file:$key_file" --hostname=bootc --advertise-tags=tag:server \
+        --accept-dns=false --accept-routes=false --ssh=false
     rm -f "$key_file"
     touch "$marker"
 fi

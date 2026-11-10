@@ -1,8 +1,6 @@
 {{ define "main" }}
-<main class="main-content">
-  <section class="publications-section">
-    <h1 class="page-title">Publications</h1>
-    {{ partial "publications.html" . }}
-  </section>
-</main>
+<section class="publications-section">
+  <h1 class="page-title">{{ .Title }}</h1>
+  {{ partial "publications.html" (partial "publication-records.html" .) }}
+</section>
 {{ end }}

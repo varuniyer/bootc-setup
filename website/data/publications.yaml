@@ -1,7 +1,10 @@
 - anthology_id: "2026.lrec-1.482"
+  selected: true
 
 - anthology_id: "2023.acl-long.447"
+  selected: true
   award: "Area Chair Award"
 
 - anthology_id: "2022.findings-emnlp.111"
+  selected: true
   equal_contrib: [0, 1]

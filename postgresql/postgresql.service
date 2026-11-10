@@ -1,38 +1,18 @@
 [Unit]
 Description=PostgreSQL database server
-Requires=post-startup-postgresql.service
-After=network.target post-startup-postgresql.service
+Requires=boot-postgresql.service
+After=network.target boot-postgresql.service
 
 [Service]
 Type=notify
 User=postgres
 Group=postgres
-ExecStart=/usr/bin/postgres -D /var/lib/pgsql/data
+Environment=PGDATA=/var/lib/pgsql/data
+ExecStart=/usr/bin/postgres
 KillSignal=SIGINT
 TimeoutStartSec=infinity
 TimeoutStopSec=120
 
-ProtectSystem=strict
-ProtectHome=true
-ProtectProc=invisible
-ProtectClock=true
-ProtectKernelLogs=true
-ProtectKernelTunables=true
-ProtectKernelModules=true
-ProtectControlGroups=true
-ProtectHostname=true
-PrivateDevices=true
-PrivateTmp=true
-PrivateIPC=true
-RestrictNamespaces=true
-NoNewPrivileges=true
-LockPersonality=true
-MemoryDenyWriteExecute=true
-RestrictSUIDSGID=true
-RestrictRealtime=true
-RestrictAddressFamilies=AF_UNIX AF_INET
-SystemCallFilter=@system-service
-SystemCallArchitectures=native
 CapabilityBoundingSet=
 IPAddressDeny=any
 IPAddressAllow=localhost

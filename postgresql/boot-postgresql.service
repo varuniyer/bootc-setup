@@ -1,0 +1,19 @@
+[Unit]
+Description=PostgreSQL-side boot work (initdb, bootstrap, configs)
+Requires=boot-root.service
+After=boot-root.service
+
+[Service]
+Type=oneshot
+User=postgres
+Group=postgres
+Environment=PGDATA=/var/lib/pgsql/data
+Environment=PGHOST=/run/postgresql
+ExecStart=/opt/scripts/boot-postgresql.sh
+ExecStartPost=+/usr/bin/rm -f /run/boot-postgresql/hash
+RemainAfterExit=yes
+
+IPAddressDeny=any
+IPAddressAllow=localhost
+CapabilityBoundingSet=
+ReadWritePaths=/var/lib/pgsql /run/postgresql

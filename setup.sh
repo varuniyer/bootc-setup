@@ -13,11 +13,10 @@ systemctl mask serial-getty@.service
 # COPY'd binaries need SELinux labels.
 restorecon -R /usr/bin /usr/lib64
 
-# Caddy runs confined as httpd_t and needs outbound 80/443 for ACME.
 semodule -n -i /usr/share/selinux/packages/caddy_local.cil
 
-# Users for the services shipped outside RPM. uid/gid 26 matches the Fedora
-# postgres package so existing /var/lib/pgsql data stays readable.
+# Users for the services shipped outside RPM. uid/gid 26 matches Fedora's
+# PostgreSQL packaging so existing /var/lib/pgsql data stays readable.
 groupadd -r caddy
 useradd -r -g caddy -d /var/lib/caddy -s /usr/sbin/nologin caddy
 groupadd -r -g 26 postgres
@@ -25,11 +24,8 @@ useradd -r -u 26 -g postgres -d /var/lib/pgsql -s /usr/sbin/nologin postgres
 
 mkdir /etc/rclone /etc/pki/containers
 
-# tmpfiles can't touch the read-only /usr or / at boot. rpm-ostree still wants
-# a real /usr/local/sbin dir, and systemd's `z / 555` can't take: layer tars
-# carry no entry for /, so the deployed root stays 0755.
+# rpm-ostree's tmpfiles entry needs /usr/local/sbin, and /usr is read-only at boot.
 mkdir /usr/local/sbin
-ln -s /dev/null /etc/tmpfiles.d/root.conf
 
 # Rebuild initramfs so prepare-root.conf's [etc] transient takes effect.
 # /root is a symlink to /var/roothome. Materialize it for dracut-install,
@@ -40,19 +36,21 @@ dracut --no-hostonly --force --kver "$KVER" /usr/lib/modules/"$KVER"/initramfs.i
 rmdir /var/roothome
 
 # The base image ships group-writable files that its own RPMs declare 0644.
-# Strip stray write bits from everything COPY'd or inherited.
 find /usr /etc /opt \( -type f -o -type d \) -perm /022 -exec chmod go-w {} +
 
-# COPY --from preserves source-image ownership, so root reclaims those files.
-find /usr /opt ! -user root -exec chown root:root {} +
-
-# Build-time ownership/perms so post-startup-root needs no CAP_CHOWN at runtime.
 chown root:caddy /etc/caddy/Caddyfile
 chmod 0640 /etc/caddy/Caddyfile
 
-# The `creds` group bridges root and postgres. post-startup-root runs as Group=creds,
-# so the files it writes carry the group, and postgres reads them via membership.
+# boot-root writes as Group=creds, and membership lets postgres read those files.
 groupadd -r creds
 usermod -aG creds postgres
 
-systemctl enable nftables tailscaled post-startup-root post-startup-tailscale post-startup-postgresql rclone-webdav caddy postgresql bootc-fetch-apply-updates.timer
+# Every shipped unit links the shared sandbox.
+for unit in boot-root boot-tailscale boot-postgresql tailscaled rclone-webdav caddy postgresql; do
+    mkdir /usr/lib/systemd/system/$unit.service.d
+    ln -s ../../hardening.conf /usr/lib/systemd/system/$unit.service.d/hardening.conf
+done
+
+systemctl enable nftables tailscaled boot-tailscale rclone-webdav caddy postgresql bootc-fetch-apply-updates.timer
+
+bootc container lint

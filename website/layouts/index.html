@@ -1,12 +1,10 @@
 {{ define "main" }}
-<main class="main-content">
-  {{ partial "about.html" . }}
-  <section class="publications-section">
-    <div class="publications-section-header">
-      <h2 class="section-title">Selected Publications</h2>
-      <a href="/publications/" class="view-all">View all</a>
-    </div>
-    {{ partial "publications.html" . }}
-  </section>
-</main>
+{{ partial "about.html" . }}
+<section class="publications-section">
+  <div class="publications-section-header">
+    <h2 class="section-title">Selected Publications</h2>
+    <a href="{{ (site.GetPage "/publications").RelPermalink }}" class="view-all">View all</a>
+  </div>
+  {{ partial "publications.html" (where (partial "publication-records.html" .) "selected" true) }}
+</section>
 {{ end }}

@@ -16,6 +16,7 @@
     "authors" $authors
     "booktitle" $mods.relatedItem.titleInfo.title
     "issued" (time.AsTime (printf "%s-01" $mods.originInfo.dateIssued))
+    "selected" .selected
     "award" .award
     "equal_contrib" .equal_contrib) }}
 {{- end }}

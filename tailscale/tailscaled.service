@@ -16,24 +16,7 @@ StateDirectoryMode=0700
 CacheDirectory=tailscale
 CacheDirectoryMode=0750
 
-# DynamicUser implies ProtectSystem=strict, PrivateTmp, NoNewPrivileges, RemoveIPC.
-ProtectHome=true
-ProtectProc=invisible
-ProtectClock=true
-ProtectKernelLogs=true
-ProtectKernelTunables=true
-ProtectKernelModules=true
-ProtectHostname=true
-PrivateIPC=true
-RestrictNamespaces=true
-LockPersonality=true
-MemoryDenyWriteExecute=true
-RestrictSUIDSGID=true
-RestrictRealtime=true
-SystemCallFilter=@system-service
-SystemCallArchitectures=native
-PrivateDevices=true
-RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+RestrictAddressFamilies=AF_INET6 AF_NETLINK
 CapabilityBoundingSet=
 
 [Install]

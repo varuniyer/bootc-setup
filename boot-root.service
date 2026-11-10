@@ -1,0 +1,16 @@
+[Unit]
+Description=Root-side boot configuration from instance metadata
+Requires=network-online.target
+After=network-online.target nftables.service
+
+[Service]
+Type=oneshot
+User=root
+Group=creds
+ExecStart=/opt/scripts/boot-root.sh
+RemainAfterExit=yes
+RuntimeDirectory=boot-postgresql
+RuntimeDirectoryMode=0750
+
+CapabilityBoundingSet=CAP_DAC_READ_SEARCH
+ReadWritePaths=/run/caddy /etc/rclone /etc/pki/containers

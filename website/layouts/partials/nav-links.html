@@ -1,0 +1,3 @@
+{{ range site.Menus.main }}
+<a href="{{ .URL }}" class="nav-link"{{ if strings.HasSuffix .URL ".pdf" }} target="_blank" rel="noopener noreferrer"{{ end }}>{{ .Name }}</a>
+{{ end }}

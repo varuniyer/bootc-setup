@@ -1,0 +1,17 @@
+[Unit]
+Description=First-boot Tailscale login and per-boot serve config
+Requires=tailscaled.service network-online.target
+After=tailscaled.service network-online.target nftables.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/scripts/boot-tailscale.sh
+RemainAfterExit=yes
+TimeoutStartSec=300
+StateDirectory=boot-tailscale
+StateDirectoryMode=0700
+
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target

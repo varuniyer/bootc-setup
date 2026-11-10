@@ -1,4 +1,4 @@
-name: build-and-deploy
+name: build-and-publish
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
     paths-ignore: [README.md, AGENTS.md]
 
 concurrency:
-  group: build-and-deploy
+  group: build-and-publish
   cancel-in-progress: true
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
   id-token: write
 
 jobs:
-  build-and-deploy:
+  build-and-publish:
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v7
@@ -26,11 +26,9 @@ jobs:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
-      - name: Build and deploy
-        run: sudo -E PATH="$PATH" bash build-and-deploy.sh
+      - name: Build and publish
+        run: sudo -E PATH="$PATH" bash build-and-publish.sh
         env:
-          CI_REGISTRY: ghcr.io
-          CI_REGISTRY_IMAGE: ghcr.io/${{ github.repository }}
           CI_REGISTRY_USER: ${{ github.actor }}
           CI_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           SIGSTORE_PRIVATE_KEY: ${{ secrets.SIGSTORE_PRIVATE_KEY }}
