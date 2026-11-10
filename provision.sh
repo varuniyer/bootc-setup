@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Prompts for secrets, hashes the passwords locally, and creates the GCP instance
-# with the results in metadata. Usage: ./provision.sh
+# Prompts for secrets, hashes the passwords locally, sets up the daily build, CI's GCP
+# access, and the signing key, and creates the GCP instance with the results in
+# metadata. Usage: ./provision.sh
 
 ZONE=us-central1-b
 MACHINE_TYPE=c4a-standard-1
@@ -98,7 +99,7 @@ gcloud compute instances create bootc \
     --metadata "^|^acme-email=$ACME_EMAIL|domain=$DOMAIN|redir-list=$REDIR_LIST|mta-sts-txt=$mtasts|postgres-experiments-scram=$hash|webdav-htpasswd=$htpasswd|sigstore-public-key=$sigpub" \
     --metadata-from-file=ts-authkey=<(printf '%s' "$TS_AUTHKEY")
 
-# Direct WireGuard path for Tailscale; without it, traffic falls back to DERP
+# Direct WireGuard path for Tailscale. Without it, traffic falls back to DERP
 # relays over outbound 443. Created once, shared by reprovisioned instances.
 gcloud compute firewall-rules describe allow-tailscale-wireguard >/dev/null 2>&1 || \
     gcloud compute firewall-rules create allow-tailscale-wireguard \

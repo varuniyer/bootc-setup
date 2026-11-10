@@ -7,7 +7,7 @@ rm -rf /etc/ssh
 # Nor mDNS, NFS, or a KMS console on tty1. Nothing here uses them.
 dnf remove -y avahi avahi-libs nfs-utils gssproxy rpcbind kmscon
 # systemd-getty-generator adds a login prompt on the kernel's serial console.
-# Masking the template drops it; the serial log stays readable.
+# Masking the template drops it, and the serial log stays readable.
 systemctl mask serial-getty@.service
 
 # COPY'd binaries need SELinux labels.
@@ -32,8 +32,8 @@ mkdir /usr/local/sbin
 ln -s /dev/null /etc/tmpfiles.d/root.conf
 
 # Rebuild initramfs so prepare-root.conf's [etc] transient takes effect.
-# /root is a symlink to /var/roothome; materialize it for dracut-install,
-# then remove so the image's /var stays empty.
+# /root is a symlink to /var/roothome. Materialize it for dracut-install,
+# then remove it so the image's /var stays empty.
 KVER=$(basename /usr/lib/modules/*)
 mkdir -p /var/roothome
 dracut --no-hostonly --force --kver "$KVER" /usr/lib/modules/"$KVER"/initramfs.img
@@ -47,13 +47,12 @@ find /usr /etc /opt \( -type f -o -type d \) -perm /022 -exec chmod go-w {} +
 find /usr /opt ! -user root -exec chown root:root {} +
 
 # Build-time ownership/perms so post-startup-root needs no CAP_CHOWN at runtime.
-# The `creds` group bridges root and postgres: root can chgrp to a group it's in
-# without the cap, postgres reads files in the group via membership.
 chown root:caddy /etc/caddy/Caddyfile
 chmod 0640 /etc/caddy/Caddyfile
 
+# The `creds` group bridges root and postgres. post-startup-root runs as Group=creds,
+# so the files it writes carry the group, and postgres reads them via membership.
 groupadd -r creds
-usermod -aG creds root
 usermod -aG creds postgres
 
 systemctl enable nftables tailscaled post-startup-root post-startup-tailscale post-startup-postgresql rclone-webdav caddy postgresql bootc-fetch-apply-updates.timer

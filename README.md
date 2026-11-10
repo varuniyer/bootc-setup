@@ -2,14 +2,14 @@
 
 Immutable bootc-based Fedora image for a single-node personal web stack: a public Hugo site plus tailnet-only WebDAV and PostgreSQL, with stateless configuration rendered from GCE instance metadata on every boot.
 
-The image carries no site-specific values. The served domain, credentials, and Tailscale auth key all flow from GCE instance metadata at provision time, meaning the exact same image can be deployed anywhere. Caddy handles the public site on port 443, while PostgreSQL and WebDAV are strictly private, accessible only over your Tailscale tailnet.
+The image carries no site-specific values. The served domain, credentials, and Tailscale auth key all flow from GCE instance metadata at provision time, meaning the exact same image can be deployed anywhere. Caddy serves the public site and the MTA-STS policy at `mta-sts.<DOMAIN>` on port 443, while PostgreSQL and WebDAV are strictly private, accessible only over your Tailscale tailnet.
 
 Filesystem layout follows the conventions described in the [Fedora bootc documentation](https://docs.fedoraproject.org/en-US/bootc/).
 
 ## Architecture
 
-- **Stateless Configuration**: `/etc` is configured as transient via `prepare-root.conf`. All runtime configurations are re-rendered from `/usr/etc` templates and instance metadata on every boot. Persistent state lives exclusively under `/var`.
-- **Base Image**: `Containerfile` builds upon `quay.io/fedora/fedora-bootc:latest`. The final stage copies `tailscale`, `tailscaled`, `caddy`, `rclone`, and `envsubst` from their official images, and a dedicated stage builds PostgreSQL from source against the same base. No service is installed through dnf. `setup.sh` removes SSH and handles users, permissions, and service enablement.
+- **Stateless Configuration**: `/etc` is configured as transient via `prepare-root.conf`, so every boot starts it fresh from the image's `/usr/etc`. Boot scripts then write the files derived from instance metadata. Persistent state lives exclusively under `/var`.
+- **Base Image**: `Containerfile` builds upon `quay.io/fedora/fedora-bootc:latest`. The final stage copies `tailscale`, `tailscaled`, `caddy`, and `rclone` from their official images, and a dedicated stage builds PostgreSQL from source against the same base. No service is installed through dnf. `setup.sh` removes SSH and handles users, permissions, and service enablement.
 - **Continuous Integration**: A GitHub Actions workflow builds the image with Podman, pushes it to `ghcr.io`, and rebuilds a GCP disk image to serve as a recovery seed. A Cloud Scheduler job dispatches the workflow daily so package updates ship even without commits.
 - **Automatic Updates**: The running VM updates itself directly from the container registry via the `bootc-fetch-apply-updates` systemd timer. The GCP image is only used for disaster recovery or initial VM creation.
 - **Signed Images**: CI signs each pushed image with a sigstore key. `containers/policy.json` makes the VM accept an update only when its signature verifies against the public key from instance metadata.
@@ -19,7 +19,7 @@ Filesystem layout follows the conventions described in the [Fedora bootc documen
 `provision.sh` holds the non-secret configuration, prompts for secrets, and pushes both into GCE instance metadata.
 
 ### 1. Prepare Credentials
-Install Podman, the gcloud CLI, and the [GitHub CLI](https://cli.github.com/). Run `gh auth login` as an account that can manage this repository's Actions secrets and variables, and `gcloud auth login` as a project owner. Then edit the settings at the top of `provision.sh`:
+Install Podman, the gcloud CLI, and the [GitHub CLI](https://cli.github.com/). Run `gh auth login` as an account that can manage this repository's Actions secrets and variables, and `gcloud auth login` as a project owner. `provision.sh` leaves the public entry points to you. The project needs a static external address named `bootc-ip` in the zone's region, and DNS records pointing `DOMAIN`, `mta-sts.<DOMAIN>`, and every `REDIR_LIST` name at it. It also needs firewall rules allowing inbound TCP 80 and 443. Then edit the settings at the top of `provision.sh`:
 - `ZONE`, `MACHINE_TYPE`, `DISK_SIZE`, `DISK_TYPE`: GCP zone, instance type, and boot disk shape passed to `gcloud compute instances create`.
 - `DOMAIN`: Primary domain Caddy serves (fills `{$DOMAIN}` in the Caddyfile).
 - `ACME_EMAIL`: Email for ACME CA registration.
@@ -61,7 +61,7 @@ psql 'postgresql://experiments:<PASSWORD>@bootc.<tailnet>.ts.net:5432/experiment
 **WebDAV**:
 WebDAV is served over HTTPS under the node's MagicDNS name, which requires HTTPS certificates to be enabled for the tailnet. `tailscaled` terminates TLS, obtains the Let's Encrypt certificate on the first request, renews it automatically, and caches it under `/var/lib/tailscale`, so the certificate survives reboots and image updates. Configure `rclone` (`type = webdav`, `vendor = rclone`) using `WEBDAV_USERNAME` and the WebDAV password, then access it via:
 ```bash
-rclone ls dav:   # url = https://bootc.<tailnet>.ts.net:8080
+rclone ls webdav:   # url = https://bootc.<tailnet>.ts.net:8080
 ```
 
 ## Reprovisioning
@@ -103,6 +103,6 @@ The host minimizes attack surface via strict networking and systemd sandboxing r
 
 ### Configuration
 - `prepare-root.conf`, `bootc.json`, `nftables.conf`, `fstab`, `journald.conf`: Standalone configuration files.
-- `containers/`: `policy.json`, which requires a valid signature on this repository's image, `bootc-setup.yaml`, which stores and reads those signatures as sigstore attachments in the registry, and `sigpolicy.toml`, which makes `bootc install` record the image as `ostree-image-signed`.
+- `containers/`: `policy.json`, which requires a valid signature on this repository's registry image and accepts local `containers-storage` images so the CI seed build can install the unsigned image it just built, `bootc-setup.yaml`, which stores and reads those signatures as sigstore attachments in the registry, and `sigpolicy.toml`, which makes `bootc install` record the image as `ostree-image-signed`.
 - `hash-pg-password/`: Containerized SCRAM-SHA-256 hasher to generate secure PostgreSQL password hashes locally without a host installation.
 - `website/`: Static site source files (Hugo).

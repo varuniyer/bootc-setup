@@ -13,19 +13,13 @@ $f mta-sts-txt > /run/caddy/mta-sts/.well-known/mta-sts.txt
 # Files under /run inherit var_run_t, which httpd_t (Caddy) cannot read.
 chcon -R -t httpd_sys_content_t /run/caddy/mta-sts
 
-# RuntimeDirectory creates the dir as root:root 0750; tighten to root:creds so
-# postgres (via creds membership) can traverse it but the world cannot.
-chgrp creds /run/post-startup-postgresql
-
 ( umask 077; /opt/scripts/fetch_metadata.sh webdav-htpasswd > /etc/rclone/webdav.htpasswd )
 
 # containers/policy.json accepts image updates only when signed by this key.
 $f sigstore-public-key > /etc/pki/containers/sigstore.pub
 
-# Postgres hash on first boot only. chgrp creds works without CAP_CHOWN because root
-# is in the creds group (set in setup.sh); postgres reads via creds membership.
+# Postgres hash on first boot only. The unit's Group=creds gives the file its group.
 if [ ! -d /var/lib/pgsql/data/base ]; then
     /opt/scripts/fetch_metadata.sh postgres-experiments-scram > /run/post-startup-postgresql/hash
-    chgrp creds /run/post-startup-postgresql/hash
     chmod 0640 /run/post-startup-postgresql/hash
 fi

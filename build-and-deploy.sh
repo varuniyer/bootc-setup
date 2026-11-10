@@ -10,15 +10,14 @@ curl -sSf --retry 3 --retry-all-errors https://dl.google.com/dl/cloudsdk/channel
 PATH="/opt/google-cloud-sdk/bin:$PATH"
 
 podman login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
-# Runner image 20260726 pairs podman 5.8 with a stale /usr/bin/crun (actions/runner-images#14473).
-podman build --runtime "$(command -v crun)" --layers=false -f Containerfile -t "$IMAGE" .
+podman build --layers=false -f Containerfile -t "$IMAGE" .
 # Signatures go to the registry as sigstore attachments, where the VM looks for them.
 mkdir -p /etc/containers/registries.d && cp containers/bootc-setup.yaml /etc/containers/registries.d/
 podman push --sign-by-sigstore-private-key <(printf '%s' "$SIGSTORE_PRIVATE_KEY") --sign-passphrase-file <(printf '%s' "$SIGSTORE_PASSPHRASE") "$IMAGE"
 
 mkdir -p output
 STORAGE=$(podman info --format '{{.Store.GraphRoot}}')
-podman run --runtime "$(command -v crun)" --rm --privileged --pull=newer \
+podman run --rm --privileged --pull=newer \
   -v "$PWD/output:/output" -v "$STORAGE:/var/lib/containers/storage" \
   quay.io/centos-bootc/bootc-image-builder:latest --type raw --use-librepo=True --rootfs ext4 "$IMAGE"
 

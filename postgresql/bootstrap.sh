@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Runs as postgres on first boot. The hash flows through stdin so it stays
-# out of argv and env.
+# Runs as postgres on first boot.
 
 pg_ctl -D /var/lib/pgsql/data -w start
 hash=$(cat /run/post-startup-postgresql/hash)

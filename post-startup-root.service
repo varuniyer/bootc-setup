@@ -1,5 +1,5 @@
 [Unit]
-Description=Root-side boot setup (caddy env, postgres hash)
+Description=Root-side boot setup from instance metadata
 Requires=network-online.target
 After=local-fs.target network-online.target nftables.service
 Before=post-startup-postgresql.service caddy.service
