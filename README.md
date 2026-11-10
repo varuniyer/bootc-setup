@@ -42,6 +42,11 @@ This script pushes configuration into instance metadata, creates the VM, and ide
 
 Point DNS records for `DOMAIN`, `mta-sts.<DOMAIN>`, and every `REDIR_LIST` name at the `bootc-ip` address. The address survives VM deletion, so the records stay valid across reprovisioning.
 
+A project's `default` network starts with `default-allow-ssh` and `default-allow-rdp` rules. Nothing on the VM listens on those ports, so deleting them is optional:
+```bash
+gcloud compute firewall-rules delete default-allow-ssh default-allow-rdp
+```
+
 ### 3. Clean Up Single-Use Secrets
 After provisioning, verify that you can connect to PostgreSQL over the tailnet. Once verified, remove the single-use secrets from instance metadata:
 ```bash
