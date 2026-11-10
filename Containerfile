@@ -4,10 +4,10 @@ COPY postgresql/build.sh /build.sh
 RUN bash /build.sh
 
 
-# The website repo's publish workflow builds the site and CV into its static branch.
+# The website repo's publish workflow builds the site and CV into its `site` branch.
 FROM base AS website
 ARG WEBSITE_REPO
-RUN mkdir /website && curl -sSf --retry 3 --retry-all-errors https://codeload.github.com/$WEBSITE_REPO/tar.gz/refs/heads/static | tar -xz -C /website --strip-components=1
+RUN mkdir /website && curl -sSf --retry 3 --retry-all-errors https://codeload.github.com/$WEBSITE_REPO/tar.gz/refs/heads/site | tar -xz -C /website --strip-components=1
 
 
 FROM base
