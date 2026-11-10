@@ -100,8 +100,8 @@ gcloud compute instances create bootc \
     --zone="$ZONE" --machine-type="$MACHINE_TYPE" --image=bootc \
     --boot-disk-size="$DISK_SIZE" --boot-disk-type="$DISK_TYPE" --address=bootc-ip \
     --shielded-secure-boot --shielded-vtpm --no-service-account --no-scopes \
-    --metadata "^|^acme-email=$ACME_EMAIL|domain=$DOMAIN|redir-list=$REDIR_LIST|mta-sts-txt=$mtasts|postgres-experiments-scram=$hash|webdav-htpasswd=$htpasswd|sigstore-public-key=$sigpub" \
-    --metadata-from-file=ts-authkey=<(printf '%s' "$TS_AUTHKEY")
+    --metadata "^|^acme-email=$ACME_EMAIL|domain=$DOMAIN|redir-list=$REDIR_LIST|mta-sts-txt=$mtasts|sigstore-public-key=$sigpub" \
+    --metadata-from-file=ts-authkey=<(printf '%s' "$TS_AUTHKEY"),postgres-experiments-scram=<(printf '%s' "$hash"),webdav-htpasswd=<(printf '%s' "$htpasswd")
 
 gcloud compute firewall-rules describe allow-web >/dev/null 2>&1 || \
     gcloud compute firewall-rules create allow-web \
