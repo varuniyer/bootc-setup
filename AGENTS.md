@@ -24,7 +24,7 @@
 
 - Nothing ever logs into the VM. There is no sshd, no serial getty login, and no user password. Never propose running commands on the VM, including live /etc edits. Every fix lands by committing to the repo and letting an image update apply it.
 - Inspect runtime state through the read-only serial log: `gcloud compute instances get-serial-port-output bootc`. Don't rebuild the image locally to answer questions about deployed state.
-- To pick up an update or recover from bad state, reboot the whole VM with `gcloud compute instances reset bootc` instead of reasoning about individual services.
+- bootc-fetch-apply-updates.timer fetches and applies each update by itself, 1 to 3 hours after boot and every 8 to 10 hours after that, and reboots the VM to apply it. A reset boots only an update the timer has already staged. To recover from bad state, reboot the whole VM with `gcloud compute instances reset bootc` instead of reasoning about individual services.
 - PostgreSQL and WebDAV are tailnet-only. Query PostgreSQL with `psql` and exercise WebDAV with `rclone <op> webdav:...`.
 
 ## Rulings
