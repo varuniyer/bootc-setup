@@ -42,7 +42,7 @@ This script pushes configuration into instance metadata, creates the VM, and ide
 
 Point DNS records for `DOMAIN`, `mta-sts.<DOMAIN>`, and every `REDIR_LIST` name at the `bootc-ip` address. The address survives VM deletion, so the records stay valid across reprovisioning.
 
-A project's `default` network starts with `default-allow-ssh` and `default-allow-rdp` rules. Nothing on the VM listens on those ports, so deleting them is optional:
+A project's `default` network starts with `default-allow-ssh` and `default-allow-rdp` rules. Nothing on this VM listens on those ports. Delete them unless other VMs in the project still need SSH or RDP:
 ```bash
 gcloud compute firewall-rules delete default-allow-ssh default-allow-rdp
 ```
