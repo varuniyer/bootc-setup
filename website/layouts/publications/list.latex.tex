@@ -1,0 +1,10 @@
+{{- define "partials/inline/latex-escape.html" }}{{ replaceRE `([&%$#_{}])` `\$1` . }}{{ end }}
+{{- range partial "publication-records.html" . }}
+{{- $ec := .equal_contrib }}
+{{- $last := sub (len .authors) 1 }}
+\item {{ range $i, $author := .authors -}}
+  {{- if eq $i $last }}{{ if gt $i 1 }},{{ end }}{{ if $i }} and {{ end }}{{ else if $i }}, {{ end -}}
+  {{- if eq $author site.Params.name }}\textbf{ {{- partial "inline/latex-escape.html" $author -}} }{{ else }}{{ partial "inline/latex-escape.html" $author }}{{ end -}}
+  {{- if in $ec $i }}$^*${{ end -}}
+{{- end }}. {{ partial "inline/latex-escape.html" .title }}. In \emph{ {{- partial "inline/latex-escape.html" .booktitle -}} }, {{ .issued.Year }}.{{ with .award }} \mbox{(\textbf{ {{- partial "inline/latex-escape.html" . -}} })}{{ end }}
+{{- end }}

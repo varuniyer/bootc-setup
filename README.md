@@ -124,4 +124,5 @@ The host minimizes attack surface via strict networking and systemd sandboxing r
 - `prepare-root.conf`, `bootc.json`, `nftables.conf`, `fstab`, `journald.conf`: Standalone configuration files.
 - `containers/`: `policy.json`, which requires a valid signature on this repository's registry image and accepts local `containers-storage` images so the CI seed build can install the unsigned image it just built, `bootc-setup.yaml`, which stores and reads those signatures as sigstore attachments in the registry, and `sigpolicy.toml`, which makes `bootc install` record the image as `ostree-image-signed`.
 - `hash-pg-password/`: Containerized SCRAM-SHA-256 hasher to generate secure PostgreSQL password hashes locally without a host installation.
-- `website/`: Static site source files (Hugo), including the `404.html` page Caddy serves for unknown paths.
+- `website/`: Static site source files (Hugo), including the `404.html` page Caddy serves for unknown paths. `data/publications.yaml` lists papers by ACL Anthology ID, and each build fetches their records from the Anthology.
+- `cv/`: LaTeX source of `CV.pdf`. A Containerfile stage compiles it with the publication list that the Hugo build generates.

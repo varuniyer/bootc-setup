@@ -2,7 +2,7 @@
 FROM ghcr.io/gohugoio/hugo:latest AS hugo
 WORKDIR /src
 COPY --chown=hugo:hugo website/ .
-RUN mkdir -p public && hugo build --minify
+RUN mkdir -p public && hugo build --minify && mv public/publications/publications.tex /src/
 
 
 # Stage 2: Compression
@@ -29,11 +29,21 @@ COPY postgresql/build.sh /build.sh
 RUN bash /build.sh
 
 
-# Stage 4: Final bootc image
+# Stage 4: CV build
+FROM quay.io/fedora/fedora:latest AS cv
+RUN dnf install -y texlive-luahbtex texlive-luaotfload texlive-latex texlive-fontspec texlive-preprint texlive-titlesec texlive-graphics texlive-enumitem texlive-hyperref texlive-babel texlive-babel-english texlive-ulem texlive-sourceserif texlive-amsfonts
+WORKDIR /cv
+COPY cv/CV.tex .
+COPY --from=hugo /src/publications.tex .
+RUN lualatex -interaction=nonstopmode -halt-on-error CV.tex && lualatex -interaction=nonstopmode -halt-on-error CV.tex
+
+
+# Stage 5: Final bootc image
 FROM quay.io/fedora/fedora-bootc:latest
 
 # Static site
 COPY --from=compress /work/public /usr/share/website
+COPY --from=cv /cv/CV.pdf /usr/share/website/CV.pdf
 # Binaries from official images (relabeled by setup.sh)
 COPY --from=docker.io/tailscale/tailscale:latest /usr/local/bin/tailscale /usr/local/bin/tailscaled /usr/bin/
 COPY --from=docker.io/library/caddy:latest       /usr/bin/caddy           /usr/bin/caddy

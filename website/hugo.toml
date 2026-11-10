@@ -6,6 +6,15 @@ publishDir = "public"
 disableKinds = ["taxonomy", "term"]
 disablePathToLower = true
 
+[mediaTypes."text/x-tex"]
+  suffixes = ["tex"]
+
+[outputFormats.latex]
+  mediaType      = "text/x-tex"
+  baseName       = "publications"
+  isPlainText    = true
+  notAlternative = true
+
 [params]
   name        = "Varun Iyer"
   role        = "CS PhD student"

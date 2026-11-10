@@ -1,0 +1,157 @@
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{enumitem}
+\usepackage[colorlinks=true, urlcolor=MidnightBlue]{hyperref}
+\usepackage[english]{babel}
+\usepackage[normalem]{ulem}
+\newcommand{\link}[2]{\href{#1}{\uline{#2}}}
+\usepackage{fontspec}
+\setmainfont{SourceSerif4}[
+  Extension      = .otf,
+  UprightFont    = *-Light,
+  BoldFont       = *-Regular,
+  ItalicFont     = *-LightIt,
+  BoldItalicFont = *-RegularIt,
+  Ligatures      = {TeX, NoCommon}
+]
+
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1in}
+\addtolength{\topmargin}{-.5in}
+\addtolength{\textheight}{1.0in}
+
+\urlstyle{same}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+\setlist[itemize,2]{beginpenalty=10000, midpenalty=10000}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+\begin{document}
+
+\begin{center}
+    \textbf{\Huge \scshape Varun Iyer} \\ \vspace{1pt}
+    \small \link{tel:+14087811118}{408-781-1118} $|$ \href{mailto:varun@varuniyer.net}{\uline{varun@varuniyer.net}} $|$
+    \link{https://linkedin.com/in/varuniyer1}{LinkedIn} $|$
+    \link{https://github.com/varuniyer}{GitHub} $|$
+    \link{https://scholar.google.com/citations?user=TbpEa3cAAAAJ}{Google Scholar}
+\end{center}
+
+\section{Education}
+    \resumeSubHeadingListStart
+        \resumeSubheading
+        {University of Illinois Chicago}{Aug 2022 -- Present}
+        {Doctor of Philosophy in Computer Science}{}
+
+        \resumeSubheading
+        {Johns Hopkins University}{Aug 2020 -- May 2022}
+        {Master of Science in Engineering in Computer Science}{}
+
+        \resumeSubheading
+        {University of Massachusetts Amherst}{Aug 2017 -- May 2020}
+        {Bachelor of Science in Computer Science}{}
+    \resumeSubHeadingListEnd
+
+\section{Publications}
+$^*$ denotes equal contribution
+\begin{enumerate}
+\input{publications.tex}
+\end{enumerate}
+
+\section{Experience}
+    \resumeSubHeadingListStart
+        \resumeSubheading
+            {Research Assistant}{Aug 2022 -- Present}{University of Illinois Chicago}{Chicago, IL}
+            \resumeItemListStart
+                \resumeItem{Working with \textbf{Professor Cornelia Caragea} on zero-shot abstractive document summarization}
+                \resumeItem{Developing approaches to improve factuality in summarization}
+                \resumeItem{Improved zero-shot summarization performance on the CNN/DM and Multi-News datasets}
+            \resumeItemListEnd
+
+        \resumeSubheading
+            {Teaching Assistant}{Jan 2023 -- Present}{University of Illinois Chicago}{Chicago, IL}
+            \resumeItemListStart
+                \resumeItem{Led lab sections for discrete mathematics and C programming courses}
+                \resumeItem{Helped students understand discrete mathematics, functional and systems programming, and NLP}
+            \resumeItemListEnd
+
+        \resumeSubheading
+            {Applied Scientist Intern}{May 2021 -- Dec 2021}{Amazon}{Remote}
+            \resumeItemListStart
+                \resumeItem{Worked with \textbf{Dr. Anoop Kumar} on unsupervised paraphrase-based data augmentation}
+                \resumeItem{Leveraged Abstract Meaning Representations (AMRs) to generate syntactically diverse paraphrases}
+                \resumeItem{Achieved SoTA performance on unsupervised paraphrase generation task on several datasets}
+            \resumeItemListEnd
+
+        \resumeSubheading
+            {Research Assistant}{May 2020 -- Dec 2021}{Johns Hopkins University}{Remote}
+            \resumeItemListStart
+                \resumeItem{Worked with \textbf{Professor Benjamin Van Durme} on semantically grounded image classification}
+                \resumeItem{Augmented a ResNet architecture with geometric hierarchical embeddings for few-shot learning}
+                \resumeItem{Extended a neural entity typing pipeline to new datasets in a distributed training setting}
+            \resumeItemListEnd
+
+        \resumeSubheading
+            {Undergraduate Researcher}{Aug 2018 -- May 2020}{University of Massachusetts Amherst}{Amherst, MA}
+            \resumeItemListStart
+                \resumeItem{Worked with \textbf{Professor Andrew McCallum} on fine-grained entity typing using PyTorch}
+                \resumeItem{Developed a stacked BiLSTM with embedding-based loss functions and hierarchical type constraints}
+            \resumeItemListEnd
+
+        \resumeSubheading
+            {Undergraduate Course Assistant}{Sep 2018 -- May 2020}{University of Massachusetts Amherst}{Amherst, MA}
+            \resumeItemListStart
+                \resumeItem{Graded homework submissions in Artificial Intelligence and Algorithms}
+                \resumeItem{Helped students complete programming assignments written in Python and C}
+            \resumeItemListEnd
+
+        \resumeSubheading
+            {Undergraduate Research Intern}{May 2018 -- Aug 2018}{USC Information Sciences Institute}{}
+            \resumeItemListStart
+                \resumeItem{Worked with \textbf{Professor Craig Knoblock} to build and link entities in a knowledge graph of space-related objects}
+                \resumeItem{Implemented level-based access control for data across multiple Elasticsearch indices}
+                \resumeItem{Extracted information on thousands of satellites and incorporated it into an Elastic workflow}
+            \resumeItemListEnd
+
+    \resumeSubHeadingListEnd
+
+\section{Technical Skills}
+ \begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+     \textbf{Languages}{: Python, Rust, C/C++, SQL} \\
+     \textbf{Frameworks}{: PyTorch, Transformers, vLLM, Kubernetes} \\
+     \textbf{Developer Tools}{: Git, Docker, GitLab CI/CD, tmux, VS Code, PyCharm, Helix} \\
+     \textbf{Libraries}{: Pandas, NumPy, Matplotlib, PyO3}
+    }}
+ \end{itemize}
+
+\end{document}
