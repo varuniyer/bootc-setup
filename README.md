@@ -1,16 +1,16 @@
 # bootc-setup
 
-Immutable bootc-based Fedora image for a single-node personal web stack: a public Hugo site plus tailnet-only WebDAV and PostgreSQL, with stateless configuration rendered from GCE instance metadata on every boot.
+Immutable bootc-based Fedora image for a single-node personal web stack: a public static site plus tailnet-only WebDAV and PostgreSQL, with stateless configuration rendered from GCE instance metadata on every boot.
 
-The image carries no deployment-specific values. `provision.sh` puts the served domain, password hashes, and Tailscale OAuth client secret into GCE instance metadata, and the VM reads them at boot, so the same image deploys to any GCP project on an Arm machine type. The image does name this repository's `ghcr.io` registry image, which it pulls and verifies updates from. Caddy serves the public site and the MTA-STS policy at `mta-sts.<DOMAIN>` on port 443, while PostgreSQL and WebDAV are reachable only over your Tailscale tailnet.
+Apart from the site it serves and this repository's `ghcr.io` registry image, which it pulls and verifies updates from, the image carries no deployment-specific values. `provision.sh` puts the served domain, password hashes, and Tailscale OAuth client secret into GCE instance metadata, and the VM reads them at boot, so the same image deploys to any GCP project on an Arm machine type. Caddy serves the public site and the MTA-STS policy at `mta-sts.<DOMAIN>` on port 443, while PostgreSQL and WebDAV are reachable only over your Tailscale tailnet.
 
 Filesystem layout follows the conventions described in the [Fedora bootc documentation](https://docs.fedoraproject.org/en-US/bootc/).
 
 ## Architecture
 
 - **Stateless Configuration**: `/etc` is configured as transient via `prepare-root.conf`, so every boot starts it fresh from the image's `/usr/etc`. Boot scripts then write the files derived from instance metadata. Persistent state lives exclusively under `/var`.
-- **Base Image**: `Containerfile` builds upon `quay.io/fedora/fedora-bootc:latest`. The final stage copies `tailscale`, `tailscaled`, `caddy`, and `rclone` from their official images, and a dedicated stage builds PostgreSQL from source.
-- **Continuous Integration**: A GitHub Actions workflow builds the arm64 image with Podman, signs it, pushes it to `ghcr.io`, and rebuilds the GCE seed image. A Cloud Scheduler job dispatches the workflow daily so package updates ship even without commits. Pushes that change only `README.md` or `AGENTS.md` skip the build, and a newer run cancels one in progress.
+- **Base Image**: `Containerfile` builds upon `quay.io/fedora/fedora-bootc:latest`. The final stage copies `tailscale`, `tailscaled`, `caddy`, and `rclone` from their official images, and a dedicated stage builds PostgreSQL from source. Another stage fetches the built site and CV from the `static` branch of the [website repo](https://github.com/varuniyer/website).
+- **Continuous Integration**: A GitHub Actions workflow builds the arm64 image with Podman, signs it, pushes it to `ghcr.io`, and rebuilds the GCE seed image. A Cloud Scheduler job dispatches the workflow daily so package updates ship even without commits, and the website repo dispatches it after each site build. Pushes that change only `README.md` or `AGENTS.md` skip the build, and a newer run cancels one in progress.
 - **Automatic Updates**: The running VM pulls updates from `ghcr.io` through the `bootc-fetch-apply-updates` systemd timer and reboots to apply each one. The seed image is only used for initial VM creation and disaster recovery.
 - **Signed Images**: CI signs each pushed image with the signing key. `containers/policy.json` makes the VM accept an update only when its signature verifies against the public key from instance metadata.
 
@@ -19,7 +19,7 @@ Filesystem layout follows the conventions described in the [Fedora bootc documen
 `provision.sh` holds the non-secret configuration and prompts for secrets. It pushes the configuration, the password hashes, and the Tailscale OAuth client secret into GCE instance metadata, stores the GitHub PAT in a Cloud Scheduler job, and stores the signing key in GitHub Actions.
 
 ### 1. Prepare the Project
-Install Podman, the gcloud CLI, and the [GitHub CLI](https://cli.github.com/). Run `gh auth login` as an account that can manage this repository's Actions secrets and variables, and `gcloud auth login` as a project owner. Select the project with `gcloud config set project`, then enable the APIs that the script and CI use:
+Install Podman, the gcloud CLI, and the [GitHub CLI](https://cli.github.com/). Run `gh auth login` as an account that can manage Actions secrets and variables in this repository and the website repo, and `gcloud auth login` as a project owner. Select the project with `gcloud config set project`, then enable the APIs that the script and CI use:
 ```bash
 gcloud services enable compute.googleapis.com cloudscheduler.googleapis.com iam.googleapis.com iamcredentials.googleapis.com storage.googleapis.com
 ```
@@ -35,10 +35,11 @@ Then edit the settings at the top of `provision.sh`:
 - `MTA_STS_URL`: URL that `provision.sh` fetches the MTA-STS policy body from, once. To pick up a later change to that policy, update the `mta-sts-txt` metadata value and reset the VM.
 - `WEBDAV_USERNAME`: WebDAV login name.
 - `REPO`, `BRANCH`: GitHub repository and branch that the daily build dispatches. Workflow runs from that branch act as the CI service account.
+- `WEBSITE_REPO`: GitHub repository whose site build dispatches this repository's workflow.
 
 The script prompts for these secrets without echoing them:
 - Tailscale OAuth client secret. It never expires, so the same value works on every reprovisioning.
-- Fine-grained GitHub PAT with Actions read/write on this repository only. The `bootc-build` Cloud Scheduler job stores it in its request headers to dispatch the daily build, and the script asks for it only while that job is missing. When the PAT expires, the daily builds stop until you replace it with the snippet below.
+- Fine-grained GitHub PAT with Actions read/write on this repository only. The `bootc-build` Cloud Scheduler job stores it to dispatch the daily build, and `WEBSITE_REPO` stores it as the `GH_WORKFLOW_TOKEN` Actions secret to dispatch the same workflow after each site build. The script asks for it only while that job is missing. When the PAT expires, both dispatches stop until you replace it with the snippet below.
 - PostgreSQL `experiments` password and WebDAV password. `provision.sh` hashes these locally so only the hashes reach instance metadata.
 
 `provision.sh` keeps each secret and password hash out of argv, the environment, shell history, and local disk.
@@ -46,7 +47,8 @@ The script prompts for these secrets without echoing them:
 To replace an expired PAT the same way, run this in an interactive shell, with `--location` set to the `REGION` that `provision.sh` derives from `ZONE`:
 ```bash
 read -rsp 'GitHub PAT: ' GH_WORKFLOW_TOKEN && echo
-CLOUDSDK_CORE_DISABLE_FILE_LOGGING=1 gcloud scheduler jobs update http bootc-build --location=us-central1 --flags-file=<(printf -- '--update-headers: "Authorization=Bearer %s"\n' "$GH_WORKFLOW_TOKEN") && unset GH_WORKFLOW_TOKEN
+CLOUDSDK_CORE_DISABLE_FILE_LOGGING=1 gcloud scheduler jobs update http bootc-build --location=us-central1 --flags-file=<(printf -- '--update-headers: "Authorization=Bearer %s"\n' "$GH_WORKFLOW_TOKEN")
+printf '%s' "$GH_WORKFLOW_TOKEN" | gh secret set GH_WORKFLOW_TOKEN --repo varuniyer/website && unset GH_WORKFLOW_TOKEN
 ```
 
 ### 2. Provision the VM
@@ -125,5 +127,3 @@ The VM minimizes attack surface via strict networking rules and systemd sandboxi
 - `tmpfiles.d/root.conf`: Masks systemd's `root.conf` tmpfiles entry.
 - `containers/`: Signature policy for image updates. `policy.json` requires a valid signature on this repository's registry image and accepts local `containers-storage` images, so the CI seed build can install the unsigned image it just built. `bootc-setup.yaml` stores and reads those signatures as sigstore attachments in the registry. `sigpolicy.toml` makes `bootc install` enforce the signature policy.
 - `hash-postgresql-password/`: Containerized SCRAM-SHA-256 hasher to generate PostgreSQL password hashes without a local PostgreSQL installation.
-- `website/`: Hugo source for the static site, including the `404.html` page Caddy serves for unknown paths. `data/publications.yaml` lists papers by ACL Anthology ID, and each build fetches their records from the Anthology.
-- `cv/`: LaTeX source of `CV.pdf`. A Containerfile stage compiles it with the publication list that the Hugo build generates.

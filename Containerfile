@@ -1,38 +1,17 @@
-FROM ghcr.io/gohugoio/hugo:latest AS hugo
-WORKDIR /src
-COPY --chown=hugo:hugo website/ .
-RUN hugo build --minify && mv public/publications/publications.tex /src/
-
-
-FROM docker.io/library/alpine:latest AS compress
-
-RUN apk add --no-cache gzip brotli
-
-WORKDIR /work
-COPY --from=hugo /src/public ./public
-
-RUN find public -type f \( -name '*.html' -o -name '*.xml' -o -name '*.css' -o -name '*.js' \) \
-    -exec gzip --best --keep {} \; -exec brotli --best --keep {} \;
-
-
 FROM quay.io/fedora/fedora-bootc:latest AS base
 FROM base AS postgresql-build
 COPY postgresql/build.sh /build.sh
 RUN bash /build.sh
 
 
-FROM quay.io/fedora/fedora:latest AS cv
-RUN dnf install -y texlive-luahbtex texlive-luaotfload texlive-latex texlive-fontspec texlive-preprint texlive-titlesec texlive-graphics texlive-enumitem texlive-hyperref texlive-babel texlive-babel-english texlive-ulem texlive-sourceserif texlive-amsfonts
-WORKDIR /cv
-COPY cv/CV.tex .
-COPY --from=hugo /src/publications.tex .
-RUN lualatex -interaction=nonstopmode -halt-on-error CV.tex && lualatex -interaction=nonstopmode -halt-on-error CV.tex
+# The website repo's publish workflow builds the site and CV into its static branch.
+FROM base AS website
+RUN mkdir /website && curl -sSf --retry 3 --retry-all-errors https://codeload.github.com/varuniyer/website/tar.gz/refs/heads/static | tar -xz -C /website --strip-components=1
 
 
 FROM base
 
-COPY --chown=0:0 --from=compress /work/public /usr/share/website
-COPY --chown=0:0 --from=cv /cv/CV.pdf /usr/share/website/CV.pdf
+COPY --chown=0:0 --from=website /website /usr/share/website
 COPY --chown=0:0 --from=docker.io/tailscale/tailscale:latest /usr/local/bin/tailscale /usr/local/bin/tailscaled /usr/bin/
 COPY --chown=0:0 --from=docker.io/library/caddy:latest       /usr/bin/caddy           /usr/bin/caddy
 COPY --chown=0:0 --from=docker.io/rclone/rclone:latest       /usr/local/bin/rclone    /usr/bin/rclone

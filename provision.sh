@@ -13,6 +13,7 @@ MTA_STS_URL=https://mta-sts.forwardemail.net/.well-known/mta-sts.txt
 WEBDAV_USERNAME=dav
 REPO=varuniyer/bootc-setup
 BRANCH=main
+WEBSITE_REPO=varuniyer/website
 
 source "$PWD/gcp.env"
 
@@ -21,6 +22,7 @@ source "$PWD/gcp.env"
 read_secret() { read -rsp "$1: " "$2"; echo >&2; }
 
 # The daily build picks up package updates. Cloud Scheduler retries a failed dispatch.
+# The website repo's publish workflow dispatches the same build with the same PAT.
 build_job=bootc-build
 gcloud scheduler jobs describe "$build_job" --location="$REGION" >/dev/null 2>&1 || {
     read_secret 'GitHub PAT with Actions read/write on this repo' GH_WORKFLOW_TOKEN
@@ -33,6 +35,7 @@ gcloud scheduler jobs describe "$build_job" --location="$REGION" >/dev/null 2>&1
         --message-body="{\"ref\":\"$BRANCH\"}" \
         --max-retry-attempts=5 \
         --attempt-deadline=120s
+    printf '%s' "$GH_WORKFLOW_TOKEN" | gh secret set GH_WORKFLOW_TOKEN --repo "$WEBSITE_REPO"
 }
 
 read_secret 'Tailscale OAuth client secret' TS_OAUTH_SECRET
