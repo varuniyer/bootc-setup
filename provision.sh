@@ -92,12 +92,20 @@ until gcloud compute images describe bootc >/dev/null 2>&1; do sleep 60; done
 # MTA-STS policy body fetched once and baked into metadata.
 mtasts=$(curl -sSf "$MTA_STS_URL")
 
+# The static address outlives the VM, so DNS keeps pointing at reprovisioned instances.
+gcloud compute addresses describe bootc-ip --region="${ZONE%-*}" >/dev/null 2>&1 || \
+    gcloud compute addresses create bootc-ip --region="${ZONE%-*}"
+
 gcloud compute instances create bootc \
     --zone="$ZONE" --machine-type="$MACHINE_TYPE" --image=bootc \
     --boot-disk-size="$DISK_SIZE" --boot-disk-type="$DISK_TYPE" --address=bootc-ip \
     --shielded-secure-boot --shielded-vtpm --no-service-account --no-scopes \
     --metadata "^|^acme-email=$ACME_EMAIL|domain=$DOMAIN|redir-list=$REDIR_LIST|mta-sts-txt=$mtasts|postgres-experiments-scram=$hash|webdav-htpasswd=$htpasswd|sigstore-public-key=$sigpub" \
     --metadata-from-file=ts-authkey=<(printf '%s' "$TS_AUTHKEY")
+
+gcloud compute firewall-rules describe allow-web >/dev/null 2>&1 || \
+    gcloud compute firewall-rules create allow-web \
+        --direction=INGRESS --allow=tcp:80,tcp:443
 
 # Direct WireGuard path for Tailscale. Without it, traffic falls back to DERP
 # relays over outbound 443. Created once, shared by reprovisioned instances.
