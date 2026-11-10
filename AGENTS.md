@@ -59,7 +59,4 @@ Settled during the 2026-11-10 audit and fix passes. A later audit treats each as
 
 ## Open items
 
-- fstab moved from /usr/etc to /etc. Check: the first boot on the new image shows bootloader-update.service finding /boot in the serial log.
-- The boot-unit renames, hardening.conf (with PrivateTmp=disconnected for all seven units), and the staged bootstrap were verified only in containers. Check: the first boot's serial log shows boot-root, boot-tailscale, boot-postgresql, and every service active, and tailnet psql still connects.
-- Rename migration, remaining steps. `ts-oauth-secret` is back in metadata so the first boot on the new image can re-run `tailscale up`. After that boot's serial log shows boot-tailscale finished and tailnet access checks out, remove `ts-oauth-secret` again. Then delete the old `bootc` seed image and its `gs://bootc` upload bucket.
 - hardening.conf's `IPAddressDeny=any` and each unit's `IPAddressAllow=` were verified only in containers. Check: the first boot's serial log on the new image shows boot-root fetching metadata under its `IPAddressAllow=169.254.169.254` filter, and boot-tailscale, tailscaled, and caddy working. The next fresh PostgreSQL bootstrap, which runs only on reprovisioning, succeeds with boot-postgresql under `IPAddressDeny=any` and no `IPAddressAllow=`.
