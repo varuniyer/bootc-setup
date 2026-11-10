@@ -1,3 +1,2 @@
-docker:
-  ghcr.io/varuniyer/bootc-setup:
-    use-sigstore-attachments: true
+default-docker:
+  use-sigstore-attachments: true

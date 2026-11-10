@@ -2,14 +2,14 @@
 set -euo pipefail
 
 IMAGE="$(jq -r '.transports.docker | keys[0]' containers/policy.json):latest"
-source "$PWD/gcp.env"
+source "$PWD/build.env"
 
 # The runner ships no gcloud. Extract outside the build context to keep it lean.
 curl -sSf --retry 3 --retry-all-errors https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-arm.tar.gz | tar -xz -C /opt
 PATH="/opt/google-cloud-sdk/bin:$PATH"
 
-podman login "${IMAGE%%/*}" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
-podman build --layers=false -f Containerfile -t "$IMAGE" .
+podman login "${IMAGE%%/*}" -u "$GITHUB_ACTOR" -p "$GITHUB_TOKEN"
+podman build --layers=false --build-arg WEBSITE_REPO="$WEBSITE_REPO" -f Containerfile -t "$IMAGE" .
 # Signatures go to the registry as sigstore attachments, where the VM looks for them.
 mkdir -p /etc/containers/registries.d && cp containers/bootc-setup.yaml /etc/containers/registries.d/
 podman push --sign-by-sigstore-private-key <(printf '%s' "$SIGSTORE_PRIVATE_KEY") --sign-passphrase-file <(printf '%s' "$SIGSTORE_PASSPHRASE") "$IMAGE"

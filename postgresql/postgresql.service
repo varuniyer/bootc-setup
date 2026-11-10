@@ -5,18 +5,13 @@ After=network.target boot-postgresql.service
 
 [Service]
 Type=notify
-User=postgres
-Group=postgres
-Environment=PGDATA=/var/lib/pgsql/data
 ExecStart=/usr/bin/postgres
 KillSignal=SIGINT
 TimeoutStartSec=infinity
 TimeoutStopSec=120
 
 CapabilityBoundingSet=
-IPAddressDeny=any
 IPAddressAllow=localhost
-ReadWritePaths=/var/lib/pgsql /run/postgresql
 
 [Install]
 WantedBy=multi-user.target

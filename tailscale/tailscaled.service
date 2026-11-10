@@ -2,12 +2,12 @@
 Description=Tailscale node agent
 # Before DHCP finishes, resolved has no upstream DNS and tailscaled's first dials fail.
 Wants=network-online.target
-After=network-online.target systemd-resolved.service
+After=network-online.target
 
 [Service]
 Type=notify
 DynamicUser=yes
-ExecStart=/usr/bin/tailscaled --tun=userspace-networking --state=/var/lib/tailscale/tailscaled.state --socket=/run/tailscale/tailscaled.sock --port=41641
+ExecStart=/usr/bin/tailscaled --tun=userspace-networking --state=${STATE_DIRECTORY}/tailscaled.state --socket=/run/tailscale/tailscaled.sock --port=41641
 Restart=on-failure
 RuntimeDirectory=tailscale
 RuntimeDirectoryMode=0755
@@ -18,6 +18,7 @@ CacheDirectoryMode=0750
 
 RestrictAddressFamilies=AF_INET6 AF_NETLINK
 CapabilityBoundingSet=
+IPAddressAllow=any
 
 [Install]
 WantedBy=multi-user.target

@@ -1,7 +1,7 @@
 [Unit]
 Description=Root-side boot configuration from instance metadata
 Requires=network-online.target
-After=network-online.target nftables.service
+After=network-online.target
 
 [Service]
 Type=oneshot
@@ -13,4 +13,5 @@ RuntimeDirectory=boot-postgresql
 RuntimeDirectoryMode=0750
 
 CapabilityBoundingSet=CAP_DAC_READ_SEARCH
-ReadWritePaths=/run/caddy /etc/rclone /etc/pki/containers
+IPAddressAllow=169.254.169.254
+ReadWritePaths=/run/caddy /etc/webdav /etc/pki/containers

@@ -29,7 +29,6 @@ jobs:
       - name: Build and publish
         run: sudo -E PATH="$PATH" bash build-and-publish.sh
         env:
-          CI_REGISTRY_USER: ${{ github.actor }}
-          CI_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SIGSTORE_PRIVATE_KEY: ${{ secrets.SIGSTORE_PRIVATE_KEY }}
           SIGSTORE_PASSPHRASE: ${{ secrets.SIGSTORE_PASSPHRASE }}

@@ -1,7 +1,7 @@
 [Unit]
 Description=First-boot Tailscale login and per-boot serve config
 Requires=tailscaled.service network-online.target
-After=tailscaled.service network-online.target nftables.service
+After=tailscaled.service network-online.target
 
 [Service]
 Type=oneshot
@@ -12,6 +12,7 @@ StateDirectory=boot-tailscale
 StateDirectoryMode=0700
 
 CapabilityBoundingSet=
+IPAddressAllow=any
 
 [Install]
 WantedBy=multi-user.target

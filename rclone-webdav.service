@@ -1,5 +1,5 @@
 [Unit]
-Description=rclone WebDAV server (tailnet-only, TLS terminated by tailscale serve)
+Description=rclone WebDAV server (tailnet-only, TLS terminated by tailscaled)
 Requires=boot-root.service
 After=boot-root.service
 
@@ -8,14 +8,13 @@ Type=simple
 DynamicUser=yes
 StateDirectory=webdav
 StateDirectoryMode=0700
-LoadCredential=htpasswd:/etc/rclone/webdav.htpasswd
-ExecStart=/usr/bin/rclone serve webdav /var/lib/webdav --config "" --addr 127.0.0.1:8080 --htpasswd ${CREDENTIALS_DIRECTORY}/htpasswd
+LoadCredential=htpasswd:/etc/webdav/htpasswd
+ExecStart=/usr/bin/rclone serve webdav ${STATE_DIRECTORY} --config "" --addr 127.0.0.1:8080 --htpasswd ${CREDENTIALS_DIRECTORY}/htpasswd
 Restart=on-failure
 # rclone exits 128+signum after handling SIGTERM, so 143 is a clean stop.
 SuccessExitStatus=143
 
 CapabilityBoundingSet=
-IPAddressDeny=any
 IPAddressAllow=localhost
 UMask=0077
 
