@@ -1,17 +1,49 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Hashes the .env passwords locally and creates the GCP instance with the
-# results in metadata. Usage: dotenvx run -- ./provision.sh
+# Prompts for secrets, hashes the passwords locally, and creates the GCP instance
+# with the results in metadata. Usage: ./provision.sh
 
-# Passwords flow through stdin so they never hit argv or disk. The hashers strip
-# the trailing newline, so the printf newline is not part of the hashed secret.
-hash=$(printf '%s\n' "$POSTGRES_PASSWORD" | podman run --rm -i --user postgres \
+ZONE=us-central1-b
+MACHINE_TYPE=c4a-standard-1
+DISK_SIZE=150GB
+DISK_TYPE=hyperdisk-balanced
+DOMAIN=varuniyer.net
+ACME_EMAIL=acme@varuniyer.net
+REDIR_LIST="varuniyer.info, varuniyer.me, www.varuniyer.net, www.varuniyer.info, www.varuniyer.me"
+MTA_STS_URL=https://mta-sts.forwardemail.net/.well-known/mta-sts.txt
+WEBDAV_USERNAME=dav
+
+# Secrets stay unexported shell variables and reach other processes only through
+# stdin or /dev/fd paths, never argv, the environment, or disk.
+read_secret() { read -rsp "$1: " "$2"; echo >&2; }
+
+# Daily image rebuild picks up package updates. Cloud Scheduler guarantees the
+# trigger with retries. GitHub's own cron is best-effort, so it is not used.
+gcloud scheduler jobs describe bootc-build --location="${ZONE%-*}" >/dev/null 2>&1 || {
+    read_secret 'GitHub PAT with Actions read/write on this repo' GH_WORKFLOW_TOKEN
+    gcloud scheduler jobs create http bootc-build \
+        --location="${ZONE%-*}" \
+        --schedule='0 0 * * *' \
+        --uri=https://api.github.com/repos/varuniyer/bootc-setup/actions/workflows/build-and-deploy.yml/dispatches \
+        --http-method=post \
+        --flags-file=<(printf -- '--headers: "Authorization=Bearer %s,Accept=application/vnd.github+json"\n' "$GH_WORKFLOW_TOKEN") \
+        --message-body='{"ref":"main"}' \
+        --max-retry-attempts=5 \
+        --attempt-deadline=120s
+}
+
+read_secret 'Tailscale OAuth client secret' TS_AUTHKEY
+read_secret 'PostgreSQL experiments password' POSTGRES_PASSWORD
+read_secret "WebDAV password for $WEBDAV_USERNAME" WEBDAV_PASSWORD
+
+# The hashers strip the trailing newline, so the printf newline is not part of
+# the hashed secret. With no network, the images have nowhere to send it.
+hash=$(printf '%s\n' "$POSTGRES_PASSWORD" | podman run --rm -i --network=none --user postgres \
     -v "$PWD/hash-pg-password:/hash-pg-password:Z,ro" \
     docker.io/library/postgres:17-alpine /bin/sh /hash-pg-password/run.sh)
-htpasswd=$(printf '%s' "$WEBDAV_PASSWORD" | podman run --rm -i docker.io/library/alpine:latest \
-    sh -c 'apk add -q --no-cache apache2-utils >&2 && htpasswd -niB "$1"' \
-    hash "$WEBDAV_USERNAME")
+htpasswd=$(printf '%s' "$WEBDAV_PASSWORD" | podman run --rm -i --network=none \
+    docker.io/library/httpd:alpine htpasswd -niB "$WEBDAV_USERNAME")
 
 # CI reaches GCP through Workload Identity Federation, so no Google key exists. Only
 # main-branch runs of this repo can act as bootc-ci, which writes the seed bucket and image.
@@ -63,23 +95,11 @@ gcloud compute instances create bootc \
     --zone="$ZONE" --machine-type="$MACHINE_TYPE" --image=bootc \
     --boot-disk-size="$DISK_SIZE" --boot-disk-type="$DISK_TYPE" --address=bootc-ip \
     --shielded-secure-boot --shielded-vtpm --no-service-account --no-scopes \
-    --metadata "^|^acme-email=$ACME_EMAIL|domain=$DOMAIN|redir-list=$REDIR_LIST|mta-sts-txt=$mtasts|ts-authkey=$TS_AUTHKEY|postgres-experiments-scram=$hash|webdav-htpasswd=$htpasswd|sigstore-public-key=$sigpub"
+    --metadata "^|^acme-email=$ACME_EMAIL|domain=$DOMAIN|redir-list=$REDIR_LIST|mta-sts-txt=$mtasts|postgres-experiments-scram=$hash|webdav-htpasswd=$htpasswd|sigstore-public-key=$sigpub" \
+    --metadata-from-file=ts-authkey=<(printf '%s' "$TS_AUTHKEY")
 
 # Direct WireGuard path for Tailscale; without it, traffic falls back to DERP
 # relays over outbound 443. Created once, shared by reprovisioned instances.
 gcloud compute firewall-rules describe allow-tailscale-wireguard >/dev/null 2>&1 || \
     gcloud compute firewall-rules create allow-tailscale-wireguard \
         --direction=INGRESS --allow=udp:41641
-
-# Daily image rebuild picks up package updates. Cloud Scheduler guarantees the
-# trigger with retries. GitHub's own cron is best-effort, so it is not used.
-gcloud scheduler jobs describe bootc-build --location="${ZONE%-*}" >/dev/null 2>&1 || \
-    gcloud scheduler jobs create http bootc-build \
-        --location="${ZONE%-*}" \
-        --schedule='0 0 * * *' \
-        --uri=https://api.github.com/repos/varuniyer/bootc-setup/actions/workflows/build-and-deploy.yml/dispatches \
-        --http-method=post \
-        --headers="Authorization=Bearer $GH_WORKFLOW_TOKEN,Accept=application/vnd.github+json" \
-        --message-body='{"ref":"main"}' \
-        --max-retry-attempts=5 \
-        --attempt-deadline=120s

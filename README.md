@@ -16,33 +16,27 @@ Filesystem layout follows the conventions described in the [Fedora bootc documen
 
 ## Deployment & Configuration
 
-Configuration is managed via `dotenvx` and pushed to GCE instance metadata during provisioning.
+`provision.sh` holds the non-secret configuration, prompts for secrets, and pushes both into GCE instance metadata.
 
 ### 1. Prepare Credentials
-Install [dotenvx](https://github.com/dotenvx/dotenvx#quickstart---), Podman, the gcloud CLI, and the [GitHub CLI](https://cli.github.com/). Run `gh auth login` as an account that can manage this repository's Actions secrets and variables, and `gcloud auth login` as a project owner. Then copy the environment template:
-```bash
-cp .env.example .env
-```
-Fill in the values in `.env`:
+Install Podman, the gcloud CLI, and the [GitHub CLI](https://cli.github.com/). Run `gh auth login` as an account that can manage this repository's Actions secrets and variables, and `gcloud auth login` as a project owner. Then edit the settings at the top of `provision.sh`:
 - `ZONE`, `MACHINE_TYPE`, `DISK_SIZE`, `DISK_TYPE`: GCP zone, instance type, and boot disk shape passed to `gcloud compute instances create`.
 - `DOMAIN`: Primary domain Caddy serves (fills `{$DOMAIN}` in the Caddyfile).
 - `ACME_EMAIL`: Email for ACME CA registration.
 - `REDIR_LIST`: Comma-separated addresses that permanently redirect to `https://${DOMAIN}`.
 - `MTA_STS_URL`: URL where `provision.sh` fetches the MTA-STS policy body.
-- `TS_AUTHKEY`: Tailscale OAuth client secret (scoped to `auth_keys` write on `tag:server`).
-- `GH_WORKFLOW_TOKEN`: Fine-grained GitHub PAT with Actions read/write on this repository only. Cloud Scheduler uses it to dispatch the daily build workflow.
-- `POSTGRES_PASSWORD`, `WEBDAV_USERNAME`, `WEBDAV_PASSWORD`: Plaintext credentials. `provision.sh` hashes these locally so only secure hashes reach instance metadata.
+- `WEBDAV_USERNAME`: WebDAV login name.
 
-Once filled, encrypt the file:
-```bash
-dotenvx encrypt
-```
-*Note: Never commit `.env.keys`. Do not commit `.env` until it has been encrypted.*
+The script prompts for these secrets without echoing them:
+- Tailscale OAuth client secret (scoped to `auth_keys` write on `tag:server`).
+- Fine-grained GitHub PAT with Actions read/write on this repository only. Cloud Scheduler uses it to dispatch the daily build workflow. The script asks for it only while the `bootc-build` job is missing.
+- PostgreSQL `experiments` password and WebDAV password. `provision.sh` hashes these locally so only the hashes reach instance metadata.
+
+Each secret lives in an unexported shell variable and reaches other processes through stdin or a `/dev/fd` path, so it stays out of argv, the environment, shell history, and disk.
 
 ### 2. Provision the Instance
-Run the provisioning script using `dotenvx`:
 ```bash
-dotenvx run -- ./provision.sh
+./provision.sh
 ```
 This script pushes configuration into instance metadata, creates the VM, and idempotently creates the `allow-tailscale-wireguard` firewall rule (UDP 41641) for direct WireGuard paths and the `bootc-build` Cloud Scheduler job that dispatches the daily image build. It also gives CI access to GCP without a stored key. GitHub Actions runs on `main` act as the `bootc-ci` service account through Workload Identity Federation, and that account can only write the `bootc` bucket and GCE images. On its first run, the script also creates the image signing key pair. The private key and its passphrase become Actions secrets, the public key becomes the `SIGSTORE_PUBLIC_KEY` Actions variable, and a signed build starts. On a fresh project, the script waits for that build's seed image before creating the VM. Later runs reuse the key. To rotate it, delete that variable before reprovisioning. On boot, `post-startup-root.sh` writes the metadata values to `/run/caddy` for Caddy's native `{$VAR}` substitution, renders `/etc/rclone/webdav.htpasswd`, and writes the signing public key to `/etc/pki/containers/sigstore.pub`.
 
@@ -65,7 +59,7 @@ psql 'postgresql://experiments:<PASSWORD>@bootc.<tailnet>.ts.net:5432/experiment
 ```
 
 **WebDAV**:
-WebDAV is served over HTTPS under the node's MagicDNS name, which requires HTTPS certificates to be enabled for the tailnet. `tailscaled` terminates TLS, obtains the Let's Encrypt certificate on the first request, renews it automatically, and caches it under `/var/lib/tailscale`, so the certificate survives reboots and image updates. Configure `rclone` (`type = webdav`, `vendor = rclone`) using the credentials from `.env`, then access it via:
+WebDAV is served over HTTPS under the node's MagicDNS name, which requires HTTPS certificates to be enabled for the tailnet. `tailscaled` terminates TLS, obtains the Let's Encrypt certificate on the first request, renews it automatically, and caches it under `/var/lib/tailscale`, so the certificate survives reboots and image updates. Configure `rclone` (`type = webdav`, `vendor = rclone`) using `WEBDAV_USERNAME` and the WebDAV password, then access it via:
 ```bash
 rclone ls dav:   # url = https://bootc.<tailnet>.ts.net:8080
 ```
@@ -74,11 +68,11 @@ rclone ls dav:   # url = https://bootc.<tailnet>.ts.net:8080
 
 To rebuild the instance from scratch:
 1. Delete the existing VM in GCP.
-2. Run `dotenvx run -- ./provision.sh`.
+2. Run `./provision.sh`.
 3. **Delete the old machine in the Tailscale admin console.** Because a recreated VM registers as a new node, the dead node will hold onto the MagicDNS name until removed.
 4. Repeat the metadata cleanup step for single-use secrets.
 
-*Note: The OAuth client secret in `.env` does not expire, so no credentials need refreshing prior to reprovisioning.*
+*Note: The Tailscale OAuth client secret does not expire, so the same value works on every reprovisioning.*
 
 ## Hardening
 
@@ -96,7 +90,6 @@ The host minimizes attack surface via strict networking and systemd sandboxing r
 - `setup.sh`: Build-time mutations (SSH, mDNS, NFS, and console login removal, users, permissions, service enablement).
 - `provision.sh`: Hashes passwords locally, sets up CI's GCP access and the signing key, and creates the GCP instance.
 - `build-and-deploy.sh` / `.github/workflows/build-and-deploy.yml`: CI pipeline for building and pushing the image.
-- `.env.example`: Template for environment variables.
 
 ### Boot Setup Scripts & Services
 - `post-startup-root.{sh,service}`: Root-side boot setup. Renders runtime configuration files from metadata.
