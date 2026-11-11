@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths-ignore: [README.md, AGENTS.md]
+    paths-ignore: [README.md, AGENTS.md, LICENSE]
 
 concurrency:
   group: build-and-publish
