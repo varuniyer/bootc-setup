@@ -1,6 +1,6 @@
 [Unit]
 Description=Root-side boot configuration from instance metadata
-Requires=network-online.target
+Wants=network-online.target
 After=network-online.target
 
 [Service]

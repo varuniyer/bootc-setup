@@ -26,6 +26,7 @@ COPY journald.conf          /etc/systemd/journald.conf
 COPY sandbox.conf           /usr/lib/systemd/sandbox.conf
 COPY postgresql/run-as-postgres.conf /usr/lib/systemd/run-as-postgres.conf
 COPY postgresql/pgdata.conf /usr/lib/systemd/pgdata.conf
+COPY tailscale/wireguard-port.env /usr/lib/systemd/wireguard-port.env
 COPY tmpfiles.d/root.conf   /etc/tmpfiles.d/root.conf
 COPY nftables.conf          /etc/sysconfig/nftables.conf
 COPY postgresql/postgresql-dirs.conf /usr/lib/tmpfiles.d/postgresql-dirs.conf
@@ -34,11 +35,13 @@ COPY caddy/caddy_local.cil  /usr/share/selinux/packages/caddy_local.cil
 COPY containers/policy.json /etc/containers/policy.json
 COPY containers/bootc-setup.yaml /etc/containers/registries.d/bootc-setup.yaml
 COPY containers/sigpolicy.toml /usr/lib/bootc/install/sigpolicy.toml
-COPY postgresql/postgresql.conf postgresql/pg_hba.conf postgresql/bootstrap.sql /usr/share/boot-postgresql/
+COPY postgresql/postgresql.conf postgresql/pg_hba.conf /etc/postgresql/
+COPY postgresql/bootstrap.sql /usr/share/boot-postgresql/
 
 COPY setup.sh boot-root.sh fetch_metadata.sh tailscale/boot-tailscale.sh postgresql/boot-postgresql.sh postgresql/bootstrap.sh /opt/scripts/
 COPY boot-root.service rclone-webdav.service tailscale/boot-tailscale.service tailscale/tailscaled.service postgresql/boot-postgresql.service postgresql/postgresql.service caddy/caddy.service /usr/lib/systemd/system/
 COPY boot-root-capabilities.conf /usr/lib/systemd/system/boot-root.service.d/zz-capabilities.conf
 COPY caddy/caddy-capabilities.conf /usr/lib/systemd/system/caddy.service.d/zz-capabilities.conf
+COPY tailscale/nftables-wireguard-port.conf /usr/lib/systemd/system/nftables.service.d/wireguard-port.conf
 
 RUN chmod +x /opt/scripts/* && /opt/scripts/setup.sh

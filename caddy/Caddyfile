@@ -2,6 +2,9 @@
 	email {$ACME_EMAIL}
 	admin off
 	persist_config off
+	servers {
+		protocols h1 h2
+	}
 }
 
 (security_headers) {

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# caddy.service loads this file with EnvironmentFile=, and Caddy fills the Caddyfile's
-# {$VAR} placeholders from that environment.
 fetch=/opt/scripts/fetch_metadata.sh
+# caddy.service loads the file this loop writes with EnvironmentFile=, and Caddy fills
+# the Caddyfile's {$VAR} placeholders from that environment.
 for key in acme-email domain redir-list; do
     value=$($fetch "$key")
     name=${key//-/_}
@@ -22,5 +22,4 @@ $fetch sigstore-public-key > /etc/pki/containers/sigstore.pub
 
 if [ ! -d "$PGDATA" ]; then
     $fetch postgresql-experiments-hash > "$RUNTIME_DIRECTORY/hash"
-    chmod 0640 "$RUNTIME_DIRECTORY/hash"
 fi

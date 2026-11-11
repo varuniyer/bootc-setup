@@ -7,7 +7,8 @@ After=network-online.target
 [Service]
 Type=notify
 DynamicUser=yes
-ExecStart=/usr/bin/tailscaled --tun=userspace-networking --state=${STATE_DIRECTORY}/tailscaled.state --socket=/run/tailscale/tailscaled.sock --port=41641
+EnvironmentFile=/usr/lib/systemd/wireguard-port.env
+ExecStart=/usr/bin/tailscaled --tun=userspace-networking --state=${STATE_DIRECTORY}/tailscaled.state --port=${WIREGUARD_PORT}
 Restart=on-failure
 RuntimeDirectory=tailscale
 RuntimeDirectoryMode=0755

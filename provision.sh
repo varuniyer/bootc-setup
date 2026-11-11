@@ -15,9 +15,10 @@ GH_REPO=$(jq -r '.transports.docker | keys[0] | ltrimstr("ghcr.io/")' "$PWD/cont
 export GH_REPO
 
 source "$PWD/build.env"
+source "$PWD/tailscale/wireguard-port.env"
 
 # Secrets stay unexported shell variables and reach other processes only through
-# stdin or /dev/fd paths, never argv, the environment, or disk.
+# stdin or /dev/fd paths, never argv, the environment, or local disk.
 read_secret() { read -rsp "$1: " "$2"; echo >&2; }
 
 # The daily build picks up package updates.
@@ -42,7 +43,7 @@ read_secret 'Tailscale OAuth client secret' TS_OAUTH_SECRET
 read_secret 'PostgreSQL experiments password' POSTGRESQL_PASSWORD
 read_secret "WebDAV password for $WEBDAV_USERNAME" WEBDAV_PASSWORD
 
-# --network=none confines each plaintext secret to its hasher container.
+# --network=none confines each plaintext secret to the container that handles it.
 postgresql_experiments_hash=$(printf '%s' "$POSTGRESQL_PASSWORD" | podman run --rm -i --log-driver=none --network=none --tmpfs /tmp --user postgres -v "$PWD/hash-postgresql-password:/hash-postgresql-password:Z,ro" \
     docker.io/library/postgres:17-alpine /bin/sh /hash-postgresql-password/run.sh)
 webdav_htpasswd=$(printf '%s' "$WEBDAV_PASSWORD" | podman run --rm -i --log-driver=none --network=none \
@@ -84,16 +85,17 @@ printf '%s' "$pool/providers/$provider_id" | gh variable set GCP_WORKLOAD_IDENTI
 printf '%s' "$service_account" | gh variable set GCP_SERVICE_ACCOUNT
 
 # Actions secrets are write-only, so the public key goes in a variable that gh can read back.
-key_var=$(gh variable list --json name --jq '.[].name | select(. == "SIGSTORE_PUBLIC_KEY")')
+public_key_var=SIGSTORE_PUBLIC_KEY
+key_var=$(gh variable list --json name --jq ".[].name | select(. == \"$public_key_var\")")
 if [ -z "$key_var" ]; then
     passphrase=$(head -c 32 /dev/urandom | base64)
-    keys=$(printf '%s\n' "$passphrase" | podman run --rm -i --log-driver=none --tmpfs /tmp --entrypoint sh quay.io/skopeo/stable:latest \
+    keys=$(printf '%s\n' "$passphrase" | podman run --rm -i --log-driver=none --network=none --tmpfs /tmp --entrypoint sh quay.io/skopeo/stable:latest \
         -c 'skopeo generate-sigstore-key --output-prefix /tmp/k --passphrase-file /dev/stdin >&2 && cat /tmp/k.pub /tmp/k.private')
     printf '%s\n' "$keys" | sed '1,/END PUBLIC KEY/d' | gh secret set SIGSTORE_PRIVATE_KEY
     printf '%s' "$passphrase" | gh secret set SIGSTORE_PASSPHRASE
-    printf '%s\n' "$keys" | sed '/END PUBLIC KEY/q' | gh variable set SIGSTORE_PUBLIC_KEY
+    printf '%s\n' "$keys" | sed '/END PUBLIC KEY/q' | gh variable set "$public_key_var"
 fi
-sigstore_public_key=$(gh variable get SIGSTORE_PUBLIC_KEY)
+sigstore_public_key=$(gh variable get "$public_key_var")
 
 # A new key needs a signed build, and a fresh project needs its first seed image.
 [ -n "$key_var" ] && gcloud compute images describe "$SEED_IMAGE" >/dev/null 2>&1 || gh workflow run "$workflow" --ref main
@@ -133,4 +135,4 @@ wireguard_rule=allow-tailscale-wireguard
 gcloud compute firewall-rules describe "$wireguard_rule" >/dev/null 2>&1 || \
     gcloud compute firewall-rules create "$wireguard_rule" \
         --direction=INGRESS \
-        --allow=udp:41641
+        --allow=udp:$WIREGUARD_PORT

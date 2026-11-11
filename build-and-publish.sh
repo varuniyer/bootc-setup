@@ -8,14 +8,15 @@ source "$PWD/build.env"
 curl -sSf --retry 3 --retry-all-errors https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-arm.tar.gz | tar -xz -C /opt
 PATH="/opt/google-cloud-sdk/bin:$PATH"
 
-podman login "${IMAGE%%/*}" -u "$GITHUB_ACTOR" -p "$GITHUB_TOKEN"
+printf '%s' "$GITHUB_TOKEN" | podman login --password-stdin -u "$GITHUB_ACTOR" "${IMAGE%%/*}"
 podman build --layers=false --build-arg WEBSITE_REPO="$WEBSITE_REPO" -f Containerfile -t "$IMAGE" .
 # Signatures go to the registry as sigstore attachments, where the VM looks for them.
 mkdir -p /etc/containers/registries.d && cp containers/bootc-setup.yaml /etc/containers/registries.d/
 podman push --sign-by-sigstore-private-key <(printf '%s' "$SIGSTORE_PRIVATE_KEY") --sign-passphrase-file <(printf '%s' "$SIGSTORE_PASSPHRASE") "$IMAGE"
 
 mkdir -p output
-podman run --rm --privileged --pull=newer -v "$PWD/output:/output" -v "$(podman info --format '{{.Store.GraphRoot}}'):/var/lib/containers/storage" \
+GRAPH_ROOT=$(podman info --format '{{.Store.GraphRoot}}')
+podman run --rm --privileged --pull=newer -v "$PWD/output:/output" -v "$GRAPH_ROOT:/var/lib/containers/storage" \
   quay.io/centos-bootc/bootc-image-builder:latest --type raw --use-librepo=True --rootfs ext4 "$IMAGE"
 
 ARCHIVE="gs://$SEED_BUCKET/$SEED_IMAGE.tar.gz"

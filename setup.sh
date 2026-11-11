@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Nothing ever logs into the VM.
+# Nothing logs into the VM.
 dnf remove -y openssh-server openssh-clients
 rm -rf /etc/ssh
 # avahi serves mDNS. nfs-utils, gssproxy, and rpcbind serve NFS. kmscon draws a
@@ -18,8 +18,8 @@ semodule -n -i /usr/share/selinux/packages/caddy_local.cil
 
 groupadd -r caddy
 useradd -r -g caddy -d /var/lib/caddy -s /usr/sbin/nologin caddy
-# uid/gid 26 matches Fedora's PostgreSQL packaging so existing /var/lib/pgsql
-# data stays readable.
+# A pinned uid/gid keeps /var/lib/pgsql readable across image builds. 26 matches
+# Fedora's PostgreSQL packaging.
 groupadd -r -g 26 postgres
 useradd -r -u 26 -g postgres -d /var/lib/pgsql -s /usr/sbin/nologin postgres
 
@@ -29,8 +29,8 @@ mkdir /etc/webdav /etc/pki/containers
 mkdir /usr/local/sbin
 
 # Rebuild initramfs so prepare-root.conf's [etc] transient takes effect.
-# /root is a symlink to /var/roothome. Materialize it for dracut-install,
-# then remove it so the image's /var stays empty.
+# /root is a symlink to /var/roothome, which rpm-ostree's tmpfiles entry creates at boot.
+# Materialize it for dracut-install, then remove it.
 KVER=$(basename /usr/lib/modules/*)
 mkdir /var/roothome
 dracut --no-hostonly --force --kver "$KVER" /usr/lib/modules/"$KVER"/initramfs.img

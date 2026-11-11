@@ -15,7 +15,6 @@ Restart=on-failure
 SuccessExitStatus=143
 
 IPAddressAllow=localhost
-UMask=0077
 
 [Install]
 WantedBy=multi-user.target

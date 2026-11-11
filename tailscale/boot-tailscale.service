@@ -1,6 +1,7 @@
 [Unit]
 Description=First-boot Tailscale login and per-boot serve config
-Requires=tailscaled.service network-online.target
+Requires=tailscaled.service
+Wants=network-online.target
 After=tailscaled.service network-online.target
 
 [Service]

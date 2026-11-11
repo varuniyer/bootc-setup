@@ -10,4 +10,4 @@ curl -sf "https://ftp.postgresql.org/pub/source/v$VERSION/postgresql-$VERSION.ta
     CFLAGS="-O2 -fstack-protector-strong -D_FORTIFY_SOURCE=3 -fPIE" LDFLAGS="-Wl,-z,relro,-z,now" LDFLAGS_EX="-pie"
 make -j"$(nproc)" world-bin
 make install-world-bin DESTDIR=/build
-rm -rf /build/usr/include /build/usr/lib64/pgxs
+rm -rf /build/usr/include /build/usr/lib64/postgresql/pgxs
