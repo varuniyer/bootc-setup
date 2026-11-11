@@ -1,3 +1,3 @@
 ; Fedora policy confines /usr/bin/caddy as httpd_t. Let it reach ACME and OCSP
-; on http_port_t without the all-ports httpd_can_network_connect boolean.
+; on http_port_t.
 (allow httpd_t http_port_t (tcp_socket (name_connect)))

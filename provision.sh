@@ -11,8 +11,8 @@ ACME_EMAIL=acme@varuniyer.net
 REDIR_LIST="varuniyer.info, varuniyer.me, www.varuniyer.net, www.varuniyer.info, www.varuniyer.me"
 MTA_STS_URL=https://mta-sts.forwardemail.net/.well-known/mta-sts.txt
 WEBDAV_USERNAME=dav
-REPO=$(jq -r '.transports.docker | keys[0] | ltrimstr("ghcr.io/")' "$PWD/containers/policy.json")
-export GH_REPO=$REPO
+GH_REPO=$(jq -r '.transports.docker | keys[0] | ltrimstr("ghcr.io/")' "$PWD/containers/policy.json")
+export GH_REPO
 
 source "$PWD/build.env"
 
@@ -29,7 +29,7 @@ gcloud scheduler jobs describe "$build_job" --location="$REGION" >/dev/null 2>&1
     CLOUDSDK_CORE_DISABLE_FILE_LOGGING=1 gcloud scheduler jobs create http "$build_job" \
         --location="$REGION" \
         --schedule='0 0 * * *' \
-        --uri="https://api.github.com/repos/$REPO/actions/workflows/$workflow/dispatches" \
+        --uri="https://api.github.com/repos/$GH_REPO/actions/workflows/$workflow/dispatches" \
         --http-method=post \
         --flags-file=<(printf -- '--headers: "Authorization=Bearer %s,Accept=application/vnd.github+json"\n' "$GH_WORKFLOW_TOKEN") \
         --message-body='{"ref":"main"}' \
@@ -42,7 +42,7 @@ read_secret 'Tailscale OAuth client secret' TS_OAUTH_SECRET
 read_secret 'PostgreSQL experiments password' POSTGRESQL_PASSWORD
 read_secret "WebDAV password for $WEBDAV_USERNAME" WEBDAV_PASSWORD
 
-# With no network, the hashers have nowhere to send the secret.
+# --network=none confines each plaintext secret to its hasher container.
 postgresql_experiments_hash=$(printf '%s' "$POSTGRESQL_PASSWORD" | podman run --rm -i --log-driver=none --network=none --tmpfs /tmp --user postgres -v "$PWD/hash-postgresql-password:/hash-postgresql-password:Z,ro" \
     docker.io/library/postgres:17-alpine /bin/sh /hash-postgresql-password/run.sh)
 webdav_htpasswd=$(printf '%s' "$WEBDAV_PASSWORD" | podman run --rm -i --log-driver=none --network=none \
@@ -65,8 +65,9 @@ gcloud iam workload-identity-pools providers describe "$provider_id" --location=
         --workload-identity-pool="$pool_id" \
         --issuer-uri=https://token.actions.githubusercontent.com \
         --attribute-mapping=google.subject=assertion.sub \
-        --attribute-condition="assertion.repository=='$REPO'"
-gcloud iam service-accounts describe "$service_account" >/dev/null 2>&1 || gcloud iam service-accounts create "${service_account%%@*}"
+        --attribute-condition="assertion.repository=='$GH_REPO'"
+gcloud iam service-accounts describe "$service_account" >/dev/null 2>&1 || \
+    gcloud iam service-accounts create "${service_account%%@*}"
 gcloud iam roles describe "$role_id" --project="$project" >/dev/null 2>&1 || \
     gcloud iam roles create "$role_id" \
         --project="$project" \
@@ -78,7 +79,7 @@ gcloud storage buckets describe "gs://$SEED_BUCKET" >/dev/null 2>&1 || \
 gcloud storage buckets add-iam-policy-binding "gs://$SEED_BUCKET" --member="serviceAccount:$service_account" --role=roles/storage.objectAdmin >/dev/null
 gcloud projects add-iam-policy-binding "$project" --member="serviceAccount:$service_account" --role="projects/$project/roles/$role_id" --condition=None >/dev/null
 gcloud iam service-accounts add-iam-policy-binding "$service_account" --role=roles/iam.workloadIdentityUser \
-    --member="principal://iam.googleapis.com/$pool/subject/repo:$REPO:ref:refs/heads/main" >/dev/null
+    --member="principal://iam.googleapis.com/$pool/subject/repo:$GH_REPO:ref:refs/heads/main" >/dev/null
 printf '%s' "$pool/providers/$provider_id" | gh variable set GCP_WORKLOAD_IDENTITY_PROVIDER
 printf '%s' "$service_account" | gh variable set GCP_SERVICE_ACCOUNT
 
@@ -106,7 +107,7 @@ gcloud compute addresses describe "$address" --region="$REGION" >/dev/null 2>&1 
     gcloud compute addresses create "$address" \
         --region="$REGION"
 
-gcloud compute instances create bootc \
+gcloud compute instances create bootc-server \
     --zone="$ZONE" \
     --machine-type="$MACHINE_TYPE" \
     --image="$SEED_IMAGE" \

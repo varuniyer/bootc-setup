@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Builds against the same fedora-bootc userland as the final stage, so the installed tree links cleanly there.
-dnf install -y --setopt=install_weak_deps=False gcc make bison flex perl tar gzip curl zlib-devel openssl-devel systemd-devel
+dnf install -y --setopt=install_weak_deps=False gcc make bison flex perl zlib-devel openssl-devel systemd-devel
 
 VERSION=$(curl -sf https://ftp.postgresql.org/pub/source/ | grep -oP 'v\K17\.[0-9]+' | sort -uV | tail -1)
 curl -sf "https://ftp.postgresql.org/pub/source/v$VERSION/postgresql-$VERSION.tar.gz" | tar xz && cd "postgresql-$VERSION"

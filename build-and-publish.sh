@@ -21,5 +21,7 @@ podman run --rm --privileged --pull=newer -v "$PWD/output:/output" -v "$(podman 
 ARCHIVE="gs://$SEED_BUCKET/$SEED_IMAGE.tar.gz"
 tar --format=oldgnu -Sczf - -C output/image disk.raw | gcloud storage cp - "$ARCHIVE"
 gcloud compute images delete "$SEED_IMAGE" --quiet || true
-gcloud compute images create "$SEED_IMAGE" --source-uri="$ARCHIVE" --guest-os-features=UEFI_COMPATIBLE,GVNIC
+gcloud compute images create "$SEED_IMAGE" \
+    --source-uri="$ARCHIVE" \
+    --guest-os-features=UEFI_COMPATIBLE,GVNIC
 gcloud storage rm "$ARCHIVE"

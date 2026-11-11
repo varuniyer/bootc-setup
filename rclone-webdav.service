@@ -14,7 +14,6 @@ Restart=on-failure
 # rclone exits 128+signum after handling SIGTERM, so 143 is a clean stop.
 SuccessExitStatus=143
 
-CapabilityBoundingSet=
 IPAddressAllow=localhost
 UMask=0077
 

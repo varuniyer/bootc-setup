@@ -6,12 +6,11 @@ After=network-online.target
 [Service]
 Type=oneshot
 User=root
-Group=creds
+Group=pghash
 ExecStart=/opt/scripts/boot-root.sh
 RemainAfterExit=yes
 RuntimeDirectory=boot-postgresql
 RuntimeDirectoryMode=0750
 
-CapabilityBoundingSet=CAP_DAC_READ_SEARCH
 IPAddressAllow=169.254.169.254
 ReadWritePaths=/run/caddy /etc/webdav /etc/pki/containers

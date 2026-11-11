@@ -6,12 +6,12 @@ set -euo pipefail
 marker=$STATE_DIRECTORY/logged-in
 if [ ! -f "$marker" ]; then
     # The OAuth client secret flows through a file (private /tmp) so it stays out of argv.
-    key_file=$(mktemp)
-    { /opt/scripts/fetch_metadata.sh ts-oauth-secret; printf '%s' '?ephemeral=false&preauthorized=true'; } > "$key_file"
+    secret_file=$(mktemp)
+    { /opt/scripts/fetch_metadata.sh ts-oauth-secret; printf '%s' '?ephemeral=false&preauthorized=true'; } > "$secret_file"
 
-    tailscale up --auth-key="file:$key_file" --hostname=bootc --advertise-tags=tag:server \
+    tailscale up --auth-key="file:$secret_file" --hostname=bootc-server --advertise-tags=tag:server \
         --accept-dns=false --accept-routes=false --ssh=false
-    rm -f "$key_file"
+    rm -f "$secret_file"
     touch "$marker"
 fi
 
@@ -19,7 +19,6 @@ fi
 until tailscale ip -4 >/dev/null 2>&1; do sleep 1; done
 
 # Serve config persists in tailscaled state, so every boot resets it to match this file.
-# tailscaled terminates TLS for WebDAV and keeps the cert renewed in /var/lib/tailscale.
 tailscale serve reset
 tailscale serve --bg --tcp 5432 tcp://127.0.0.1:5432
 tailscale serve --bg --https 8080 http://127.0.0.1:8080

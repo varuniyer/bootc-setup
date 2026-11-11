@@ -17,7 +17,6 @@ CacheDirectory=tailscale
 CacheDirectoryMode=0750
 
 RestrictAddressFamilies=AF_INET6 AF_NETLINK
-CapabilityBoundingSet=
 IPAddressAllow=any
 
 [Install]

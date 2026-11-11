@@ -1,5 +1,5 @@
 [Unit]
-Description=PostgreSQL bootstrap and per-boot config copy
+Description=First-boot PostgreSQL bootstrap
 Requires=boot-root.service
 After=boot-root.service
 
@@ -7,7 +7,4 @@ After=boot-root.service
 Type=oneshot
 Environment=PGHOST=/run/postgresql
 ExecStart=/opt/scripts/boot-postgresql.sh
-ExecStartPost=+/usr/bin/rm -f /run/boot-postgresql/hash
 RemainAfterExit=yes
-
-CapabilityBoundingSet=
