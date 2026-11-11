@@ -6,6 +6,14 @@ The image's only deployment-specific values are the site it serves, PostgreSQL s
 
 Filesystem layout follows the conventions described in the [Fedora bootc documentation](https://docs.fedoraproject.org/en-US/bootc/).
 
+## Why bootc
+
+The server is a container image. `Containerfile` and `setup.sh` define the whole OS, Podman builds it, and CI signs and publishes it like any other image. The image is ordinary Fedora with systemd units and shell scripts, so changing it takes no Nix expressions, and the VM pulls its own updates, so shipping a change takes no SSH-driven tool like Ansible.
+
+Nothing logs into the VM, so the running system changes only through a signed image update (see [Signed Images](#architecture) and [Automatic Updates](#architecture)). Because `/etc` resets on every boot (see [Stateless Configuration](#architecture)), each boot runs what the image and instance metadata state, and the system cannot drift from the repo.
+
+The cost is latency. Every change, a one-line config edit included, ships as a CI build that the VM applies on its own update schedule. Recovery from bad state takes a reset or reprovisioning (see [FAQ](#faq)).
+
 ## Architecture
 
 - **Stateless Configuration**: `prepare-root.conf` makes `/etc` transient, so every boot starts it fresh from the image's `/usr/etc`. Boot scripts then render the files that derive from instance metadata. Persistent state lives under `/var`.
@@ -34,12 +42,12 @@ Then edit the settings at the top of `provision.sh`, `WEBSITE_REPO` in `build.en
 - `REDIR_LIST`: Comma-separated domains that permanently redirect to the same path on `https://<DOMAIN>`.
 - `MTA_STS_URL`: URL that `provision.sh` fetches the MTA-STS policy body from, once.
 - `WEBDAV_USERNAME`: WebDAV login name.
-- `WEBSITE_REPO`: The website repo, the GitHub repository whose `site` branch supplies the served site (see Base Image).
+- `WEBSITE_REPO`: The website repo, the GitHub repository whose `site` branch supplies the served site (see [Base Image](#architecture)).
 - `containers/policy.json`: Its `ghcr.io/<owner>/<repo>` key is the image CI pushes and the VM accepts. `build-and-publish.sh` reads that image name, and `provision.sh` derives this repository's name from it.
 
 The script prompts for these secrets without echoing them:
 - Tailscale OAuth client secret. It never expires, so the same value works on every reprovisioning.
-- Fine-grained GitHub PAT with Actions read/write on this repository only. The `bootc-build` Cloud Scheduler job stores it to dispatch the daily build, and the website repo stores it as the `GH_WORKFLOW_TOKEN` Actions secret, which its publish workflow uses to dispatch the same workflow. The script asks for it only while that job is missing. When the PAT expires, both dispatches stop until you replace it (see FAQ).
+- Fine-grained GitHub PAT with Actions read/write on this repository only. The `bootc-build` Cloud Scheduler job stores it to dispatch the daily build, and the website repo stores it as the `GH_WORKFLOW_TOKEN` Actions secret, which its publish workflow uses to dispatch the same workflow. The script asks for it only while that job is missing. When the PAT expires, both dispatches stop until you replace it (see [FAQ](#faq)).
 - PostgreSQL `experiments` password and WebDAV password. `provision.sh` hashes these locally so only the hashes reach instance metadata.
 
 `provision.sh` keeps each secret and password hash out of argv, the environment, shell history, and local disk.
@@ -66,7 +74,7 @@ After provisioning, verify that you can connect to PostgreSQL over the tailnet. 
 ```bash
 gcloud compute instances remove-metadata bootc-server --keys=ts-oauth-secret,postgresql-experiments-hash
 ```
-Removing `ts-oauth-secret` matters most, because that secret never expires. The PostgreSQL check confirms that the VM used both values, and later boots read neither. Until the Tailscale login and the PostgreSQL bootstrap succeed, every boot retries them from these values. If the check fails, keep both values and reset the VM with `gcloud compute instances reset bootc-server`. When psql instead reports `password authentication failed for user "experiments"`, see FAQ. The remaining metadata values are re-read on every boot and must stay.
+Removing `ts-oauth-secret` matters most, because that secret never expires. The PostgreSQL check confirms that the VM used both values, and later boots read neither. Until the Tailscale login and the PostgreSQL bootstrap succeed, every boot retries them from these values. If the check fails, keep both values and reset the VM with `gcloud compute instances reset bootc-server`. When psql instead reports `password authentication failed for user "experiments"`, see [FAQ](#faq). The remaining metadata values are re-read on every boot and must stay.
 
 ## Access
 
@@ -137,24 +145,24 @@ Delete the `SIGSTORE_PUBLIC_KEY` Actions variable before reprovisioning. `provis
 ### Build & Provisioning
 - `Containerfile`: Multi-stage build definition.
 - `setup.sh`: Applies the final stage's build-time mutations.
-- `provision.sh`: Provisioning script (see Deployment & Configuration).
+- `provision.sh`: Provisioning script (see [Deployment & Configuration](#deployment--configuration)).
 - `build.env`: Seed image and bucket names and `WEBSITE_REPO`, sourced by both `provision.sh` and `build-and-publish.sh`.
-- `build-and-publish.sh` / `.github/workflows/build-and-publish.yml`: CI pipeline (see Continuous Integration).
+- `build-and-publish.sh` / `.github/workflows/build-and-publish.yml`: CI pipeline (see [Continuous Integration](#architecture)).
 
 ### Top-Level Scripts & Services
 - `boot-root.{sh,service}`: Runs as root and renders configuration files from metadata on each boot.
-- `boot-root-capabilities.conf`: `boot-root`'s capability drop-in (see Hardening).
+- `boot-root-capabilities.conf`: `boot-root`'s capability drop-in (see [Hardening](#hardening)).
 - `fetch_metadata.sh`: Helper the boot scripts use to read values from instance metadata.
 - `rclone-webdav.service`: WebDAV server running `rclone serve`.
 
 ### Service Folders
-- `caddy/`: `Caddyfile` (static, with `{$VAR}` placeholders filled from instance metadata), the `caddy.service` for the copied binary (see Base Image), `caddy_local.cil` (see Least Privilege), `caddy-capabilities.conf` (see Hardening), and `caddy-dirs.conf`.
-- `postgresql/`: Server configs (`postgresql.conf`, `pg_hba.conf`), `build.sh` (see Base Image), `postgresql.service`, the bootstrap (`boot-postgresql.{sh,service}`, `bootstrap.sh`, `bootstrap.sql`), `run-as-postgres.conf` (unit settings both PostgreSQL units share), `pgdata.conf` (the data dir for `boot-root` and both PostgreSQL units), and `postgresql-dirs.conf`.
-- `tailscale/`: `tailscaled.service` for the copied binary (see Base Image), `boot-tailscale.{sh,service}` (see Access), `wireguard-port.env` (the WireGuard port that `tailscaled`, `nftables`, and `provision.sh` read), and `nftables-wireguard-port.conf` (the `nftables.service` drop-in that passes that port to `nft`).
+- `caddy/`: `Caddyfile` (static, with `{$VAR}` placeholders filled from instance metadata), the `caddy.service` for the copied binary (see [Base Image](#architecture)), `caddy_local.cil` (see [Least Privilege](#hardening)), `caddy-capabilities.conf` (see [Hardening](#hardening)), and `caddy-dirs.conf`.
+- `postgresql/`: Server configs (`postgresql.conf`, `pg_hba.conf`), `build.sh` (see [Base Image](#architecture)), `postgresql.service`, the bootstrap (`boot-postgresql.{sh,service}`, `bootstrap.sh`, `bootstrap.sql`), `run-as-postgres.conf` (unit settings both PostgreSQL units share), `pgdata.conf` (the data dir for `boot-root` and both PostgreSQL units), and `postgresql-dirs.conf`.
+- `tailscale/`: `tailscaled.service` for the copied binary (see [Base Image](#architecture)), `boot-tailscale.{sh,service}` (see [Access](#access)), `wireguard-port.env` (the WireGuard port that `tailscaled`, `nftables`, and `provision.sh` read), and `nftables-wireguard-port.conf` (the `nftables.service` drop-in that passes that port to `nft`).
 
 ### Configuration
 - `prepare-root.conf`, `nftables.conf`, `fstab`, `journald.conf`: Standalone configuration files.
-- `sandbox.conf`: Shared systemd sandbox (see Hardening).
+- `sandbox.conf`: Shared systemd sandbox (see [Hardening](#hardening)).
 - `tmpfiles.d/root.conf`: Masks systemd's `root.conf` tmpfiles entry.
-- `containers/`: Signature policy for image updates (see Signed Images). `policy.json` accepts local `containers-storage` images, so CI's seed-image build can install the unsigned image it just built. `bootc-setup.yaml` turns on sigstore attachments, so CI's push writes image signatures to the registry and the VM reads them from there. `sigpolicy.toml` makes `bootc install` enforce the signature policy.
+- `containers/`: Signature policy for image updates (see [Signed Images](#architecture)). `policy.json` accepts local `containers-storage` images, so CI's seed-image build can install the unsigned image it just built. `bootc-setup.yaml` turns on sigstore attachments, so CI's push writes image signatures to the registry and the VM reads them from there. `sigpolicy.toml` makes `bootc install` enforce the signature policy.
 - `hash-postgresql-password/`: Containerized SCRAM-SHA-256 hasher to generate PostgreSQL password hashes without a local PostgreSQL installation.
