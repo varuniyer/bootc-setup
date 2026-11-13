@@ -1,6 +1,6 @@
 # bootc-setup
 
-This repository builds an immutable bootc Fedora image for a single-node personal web stack: a public static site plus tailnet-only WebDAV and PostgreSQL, with stateless configuration rendered from GCE instance metadata on every boot. Caddy serves the public site, and the MTA-STS policy at `mta-sts.<DOMAIN>`, on port 443.
+This repository builds an immutable bootc Fedora image for a single-node personal web stack: a public static site plus tailnet-only WebDAV and PostgreSQL, with stateless configuration rendered from GCE instance metadata on every boot. Caddy serves the public site, and the MTA-STS policy at `mta-sts.<DOMAIN>`, on port 443. Tailscale exposes WebDAV and PostgreSQL to the tailnet.
 
 The image's only deployment-specific values are the site it serves, PostgreSQL settings sized for `c4a-standard-1`, and this repository's `ghcr.io` image, which it pulls and verifies updates from. `provision.sh` puts every deployment-specific setting and secret the VM needs into GCE instance metadata, and the VM reads them at boot. The same image therefore deploys to any GCP project on an Arm machine type.
 
